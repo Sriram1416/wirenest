@@ -1264,23 +1264,10 @@ h4 {
 }
 
 /* Mobile Responsive Grid */
-@media (max-width: 1024px) {
-    .products-row {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
 @media (max-width: 768px) {
     .products-row {
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-}
-
-@media (max-width: 480px) {
-    .products-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
+        gap: 15px; /* Tighter gap on smaller screens */
     }
 }
 
