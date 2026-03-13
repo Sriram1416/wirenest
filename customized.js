@@ -429,8 +429,7 @@ function renderProducts() {
                         </div>
                         <div class="product-info">
                             <h3>${product.name}</h3>
-                            <div class="product-price">`;
-                    }).join('')}
+                            <div class="product-price">
                                 ${(() => {
             if (product.price !== undefined) return currency.symbol + product.price;
             const opts = product.customization_options || {};
@@ -471,7 +470,7 @@ function renderProducts() {
                             </div>
                         </div>
                     </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             </div>
         </div>

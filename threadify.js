@@ -1244,7 +1244,8 @@ async function loginWithGoogle() {
     showNotification('Redirecting to Google login...');
 
     try {
-        const response = await fetch(`${BACKEND_URL}/auth/google`);
+        const redirectUrl = encodeURIComponent(`${window.location.origin}/index.html`);
+        const response = await fetch(`${BACKEND_URL}/auth/google?redirectUrl=${redirectUrl}`);
         const data = await response.json();
 
         if (data.success && data.url) {

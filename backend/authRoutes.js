@@ -97,10 +97,12 @@ router.post("/login", async (req, res) => {
 
 /* GOOGLE OAUTH */
 router.get("/google", async (req, res) => {
+  const redirectUrl = req.query.redirectUrl || 'http://localhost:3000/index.html';
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'http://localhost:3000/index.html'
+      redirectTo: redirectUrl
     }
   });
 
