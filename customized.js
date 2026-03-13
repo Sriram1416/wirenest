@@ -412,7 +412,12 @@ function renderProducts() {
         <div class="main-products-section" id="mainProductsSection">
             <div class="product-section">
                 <div class="products-row">
-                    ${displayProducts.map(product => `
+                    ${displayProducts.map(product => {
+                        let imgUrl = product.image;
+                        if (!imgUrl.startsWith('http')) {
+                            imgUrl = imgUrl.startsWith('images') ? imgUrl : `${BACKEND_URL}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+                        }
+                        return `
                         <div class="product-card" onclick="showProductModal('${product.id}')" data-block-type="${product.blockType}" data-product-id="${product.id}">
                         <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist('${product.id}', '${product.blockType || 'customized'}', this)" aria-label="Add to Wishlist">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -420,11 +425,12 @@ function renderProducts() {
                             </svg>
                         </button>
                         <div class="product-image">
-                            <img src="${product.image.startsWith('http') ? product.image : (product.image.startsWith('images') ? product.image : '../' + product.image)}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="${imgUrl}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                         </div>
                         <div class="product-info">
                             <h3>${product.name}</h3>
-                            <div class="product-price">
+                            <div class="product-price">`;
+                    }).join('')}
                                 ${(() => {
             if (product.price !== undefined) return currency.symbol + product.price;
             const opts = product.customization_options || {};
