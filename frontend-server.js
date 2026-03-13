@@ -29,8 +29,8 @@ const server = http.createServer((req, res) => {
   if (req.url.startsWith('/review') || 
       req.url.startsWith('/auth') || 
       req.url.startsWith('/oauth')) {
-    console.log(`🔄 OAUTH REDIRECT: ${req.url} to /theardify.html`);
-    res.writeHead(302, { 'Location': '/theardify.html' });
+    console.log(`🔄 OAUTH REDIRECT: ${req.url} to /index.html`);
+    res.writeHead(302, { 'Location': '/index.html' });
     res.end();
     return;
   }
@@ -38,7 +38,7 @@ const server = http.createServer((req, res) => {
   // Log all requests for debugging
   console.log(`📝 Request: ${req.method} ${req.url}`);
   
-  let filePath = path.join(__dirname, req.url === '/' ? 'theardify.html' : req.url);
+  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
   
   // Remove query parameters from file path
   filePath = filePath.split('?')[0];
@@ -57,10 +57,10 @@ const server = http.createServer((req, res) => {
       }
       
       console.log(`❌ File not found: ${filePath}`);
-      console.log(`🔄 Redirecting to /theardify.html as fallback`);
+      console.log(`🔄 Redirecting to /index.html as fallback`);
       
-      // If file not found, redirect to theardify.html instead of serving it
-      res.writeHead(302, { 'Location': '/theardify.html' });
+      // If file not found, redirect to index.html instead of serving it
+      res.writeHead(302, { 'Location': '/index.html' });
       res.end();
     } else {
       res.writeHead(200, { 'Content-Type': mimeType });
@@ -71,5 +71,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`✅ Frontend server running on http://localhost:${PORT}`);
-  console.log(`🌐 Access your app at: http://localhost:${PORT}/theardify.html`);
+  console.log(`🌐 Access your app at: http://localhost:${PORT}/index.html`);
 });

@@ -6,9 +6,14 @@ var supabaseClient;
 
 // Determine backend URL dynamically based on where the frontend is being served
 const hostname = window.location.hostname;
-const BACKEND_URL = (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '')
-    ? 'http://localhost:8001'
-    : `http://${hostname}:8001`;
+const protocol = window.location.protocol;
+
+// If we are on Vercel, we need to point to the deployed backend URL.
+const isProduction = hostname.includes('vercel.app') || hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168.');
+
+const BACKEND_URL = isProduction 
+    ? 'https://wirenest-backend.onrender.com' // Replace with actual production backend URL
+    : 'http://localhost:8001';
 
 // DOM Elements (will be initialized after DOM loads)
 let navbar, cartCount, cartPanel, cartOverlay, cartItems, cartTotal, productsGrid, loginSignupOverlay;

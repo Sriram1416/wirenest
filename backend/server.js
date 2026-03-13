@@ -29,7 +29,7 @@ app.use("/orders", orderRoutes);
 app.use("/wishlist", wishlistRoutes);
 
 app.get("/", (_req, res) => {
-  res.sendFile(__dirname + "/../theardify.html");
+  res.sendFile(__dirname + "/../index.html");
 });
 
 const PORT = process.env.PORT || 8001;

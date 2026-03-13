@@ -54,7 +54,7 @@
             
             supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
-                redirectTo: 'http://localhost:3000/theardify.html',
+                redirectTo: 'http://localhost:3000/index.html',
                 options: {
                     queryParams: {
                         access_type: 'offline',
@@ -163,13 +163,13 @@
                 <h3>🔧 Supabase Configuration</h3>
                 <p><strong>Project URL:</strong> https://qcyrfudyumcfdbcorcrc.supabase.co</p>
                 <p><strong>Client ID:</strong> qcyrfudyumcfdbcorcrc</p>
-                <p><strong>Redirect URL (in code):</strong> http://localhost:3000/theardify.html</p>
+                <p><strong>Redirect URL (in code):</strong> http://localhost:3000/index.html</p>
                 <p><strong>Current Page:</strong> ${window.location.href}</p>
                 <br>
                 <h4>🔍 Troubleshooting Steps:</h4>
                 <ol>
                     <li>Check Supabase Dashboard → Authentication → URL Configuration</li>
-                    <li>Ensure redirect URL is exactly: <code>http://localhost:3000/theardify.html</code></li>
+                    <li>Ensure redirect URL is exactly: <code>http://localhost:3000/index.html</code></li>
                     <li>Remove any trailing slashes or extra paths</li>
                     <li>Save changes and wait a few minutes for propagation</li>
                     <li>Clear browser cache and try again</li>

@@ -100,7 +100,7 @@ router.get("/google", async (req, res) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'http://localhost:3000/theardify.html'
+      redirectTo: 'http://localhost:3000/index.html'
     }
   });
 
