@@ -1266,7 +1266,7 @@ h4 {
 /* Mobile Responsive Grid */
 @media (max-width: 1024px) {
     .products-row {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
