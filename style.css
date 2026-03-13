@@ -359,17 +359,7 @@
 }
 
 /* Show icon before login, show letter after login */
-.profile-avatar:not(.logged-in) .profile-icon {
-    display: flex;
-}
-
-.profile-avatar.logged-in .profile-icon {
-    display: none;
-}
-
-.profile-avatar.logged-in .profile-letter {
-    display: flex !important;
-}
+/* (Removed legacy display rules because threadify.js now directly replaces innerHTML) */
 
 .profile-name {
     font-size: 14px;
