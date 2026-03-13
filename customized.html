@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WireNest - Customized Products</title>
+    <link rel="stylesheet" href="style.css?v=12">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Header/Navbar -->
+    <header class="navbar" id="navbar">
+        <nav class="nav-container">
+            <div class="nav-logo">
+                <h2>WireNest</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="theardify.html#shop" class="nav-link">Home</a></li>
+                <li><a href="#shop" class="nav-link">Shop Baskets</a></li>
+                <li><a href="#customize" class="nav-link">Customize</a></li>
+                <li><a href="#contact" class="nav-link">Support</a></li>
+                <li><a href="#" class="nav-link" id="navMyOrders" style="display: none;"
+                        onclick="openUserOrders(); return false;">My Orders</a></li>
+            </ul>
+            <div class="nav-actions">
+                <div class="hamburger" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <!-- Profile Dropdown (hidden by default) -->
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-infos" onclick="toggleProfileDropdown()">
+                        <div class="profile-avatar" id="profileAvatar">
+                            <span class="profile-letter" id="profileLetter"></span>
+                            <span class="profile-icon" id="profileIcon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z">
+                                    </path>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="profile-menu" id="profileMenu">
+                        <div class="profile-menu-header">
+                            <div class="profile-menu-avatar" id="profileMenuAvatar"></div>
+                            <div class="profile-menu-name" id="profileMenuName">Arul</div>
+                            <div class="profile-menu-email" id="profileMenuEmail">user@example.com</div>
+                        </div>
+                        <div class="profile-menu-divider"></div>
+                        <div class="profile-menu-item" onclick="openWishlistModal()">
+                            <span>My Wishlist ❤️</span>
+                        </div>
+                        <div class="profile-menu-item" onclick="handleLogout()">
+                            <span>Logout</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="cart-icon-wrapper" onclick="openCart()">
+                    <svg class="cart-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z"
+                            fill="currentColor" />
+                        <path
+                            d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z"
+                            fill="currentColor" />
+                        <path
+                            d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <div class="search-section">
+                    <input type="text" class="search-input" placeholder="Search baskets..." id="searchInput">
+                    <button class="search-btn" onclick="handleSearch()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Featured Products Section -->
+    <section class="products" id="shop">
+        <div class="container">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                <h2 class="section-title" style="margin-bottom: 0;">Customizable Products</h2>
+                <a href="theardify.html" class="btn-secondary"
+                    style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Back to Normal Products
+                </a>
+            </div>
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be dynamically inserted here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom T-Shirt Banner -->
+    <section class="custom-banner" id="customize">
+        <div class="custom-banner-content">
+            <h2>Customize Your Wire Basket</h2>
+            <p>Choose colors, size & patterns that fit your style</p>
+            <button class="btn-primary btn-large" onclick="showCustomizationSection()">Start Customizing</button>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="container">
+            <div class="newsletter-content">
+                <h2>Get updates on new basket designs & offers</h2>
+                <p>Subscribe to our newsletter and be the first to know about new basket designs and special discounts
+                </p>
+                <form class="newsletter-form" onsubmit="handleNewsletter(event)">
+                    <input type="email" placeholder="Enter your email address" required>
+                    <button type="submit" class="btn-primary">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>WireNest</h3>
+                    <p>WireNest – Handcrafted wire baskets made with care, color, and customization.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#shop">Shop</a></li>
+                        <li><a href="#customize">Customize</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li><a href="#">Size Guide</a></li>
+                        <li><a href="#">Shipping Info</a></li>
+                        <li><a href="#">Returns</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <ul>
+                        <li>wirenesttest@gmail.com</li>
+                        <li>9715058175</li>
+                        <li>Mon-Fri: 9AM-6PM EST</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 WireNest. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Product Details Modal -->
+    <div id="productModal" class="product-modal">
+        <div class="modal-overlay" onclick="closeProductModal()"></div>
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeProductModal()">×</button>
+            <div class="product-details">
+                <div class="product-details-image">
+                    <div id="modalProductImageContainer">
+                        <div class="modal-product-placeholder">BASKET</div>
+                    </div>
+                </div>
+                <div class="product-details-info">
+                    <h2 id="modalProductName" style="margin-bottom: 5px;">Product Name</h2>
+                    <div class="product-details-price" id="modalProductPrice">$0.00</div>
+                    <div id="dynamicCustomPrice"
+                        style="display: none; font-size: 24px; font-weight: 800; color: var(--primary-color); margin-bottom: 15px;">
+                        Price: Select Size</div>
+                    <p class="product-details-description">Handcrafted wire basket made with durable materials.</p>
+
+                    <div class="product-options">
+                        <div class="product-details-view" id="productDetailsView">
+                            <div class="product-specs">
+                                <div class="spec-item">
+                                    <h4>Size: <button type="button" onclick="openSizeGuide()" style="padding: 0; margin-left:10px; font-size: 13px; color: var(--primary-color); cursor: pointer; border: none; background: none; text-decoration: underline;">📏 Size Guide</button></h4>
+                                    <div class="spec-value" id="modalSizeDisplay">Medium</div>
+                                </div>
+                                <div class="spec-item">
+                                    <h4>Price:</h4>
+                                    <div class="spec-value" id="modalPriceDisplay">₹200</div>
+                                </div>
+                                <div class="spec-item">
+                                    <h4>Available Colors:</h4>
+                                    <div class="spec-value" id="modalColorDisplay">Green | Red</div>
+                                </div>
+                                <div class="spec-item">
+                                    <h4>Description:</h4>
+                                    <div class="spec-value" id="modalDescription">Handcrafted wire basket made with
+                                        durable materials. Perfect for storage, gifting, and home decoration.</div>
+                                </div>
+                            </div>
+
+                            <div class="quantity-selector">
+                                <h4>Quantity:</h4>
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
+                                    <input type="number" id="modalQuantity" value="1" min="1" max="10" readonly>
+                                    <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                                </div>
+                            </div>
+
+                            <div class="modal-actions">
+                                <button class="btn-primary btn-large" onclick="addNormalToCart()">Add to Cart</button>
+                            </div>
+                        </div>
+
+                        <div class="customization-section" id="customizationSection" style="display: none;">
+                            <div class="customization-header"
+                                style="margin-bottom: 25px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px;">
+                                <h3 style="font-size: 24px; color: var(--text-primary); margin: 0;">Tailor Your Product
+                                </h3>
+                            </div>
+
+                            <div class="selection-container" style="display: flex; flex-direction: column; gap: 20px;">
+                                <div class="size-selector">
+                                    <h4 style="font-size: 16px; margin-bottom: 12px; color: var(--text-primary);">1.
+                                        Select Size & Variant: <button type="button" onclick="openSizeGuide()" style="padding: 0; margin-left:10px; font-size: 13px; color: var(--primary-color); cursor: pointer; border: none; background: none; text-decoration: underline;">📏 Size Guide</button></h4>
+                                    <div class="size-options" id="customSizeOptions"
+                                        style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                        <!-- Javascript will inject sizing radio buttons here -->
+                                    </div>
+                                </div>
+
+                                <div class="color-selector">
+                                    <h4 style="font-size: 16px; margin-bottom: 12px; color: var(--text-primary);">2.
+                                        Select Colors:</h4>
+                                    <div class="color-options" id="customColorOptions"
+                                        style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <!-- Javascript will inject color radio buttons here -->
+                                    </div>
+                                </div>
+
+                                <div class="quantity-selector" style="margin-top: 10px;">
+                                    <h4 style="font-size: 16px; margin-bottom: 12px; color: var(--text-primary);">3.
+                                        Select Quantity:</h4>
+                                    <div class="quantity-controls"
+                                        style="border: 2px solid #e0e0e0; border-radius: 25px; padding: 2px 15px; display: inline-flex; align-items: center; background: #fff;">
+                                        <button class="quantity-btn" onclick="decreaseCustomQuantity()"
+                                            style="border: none; background: transparent; font-size: 20px; color: var(--text-primary); cursor: pointer; padding: 5px 10px;">-</button>
+                                        <input type="number" id="customModalQuantity" value="1" min="1" max="10"
+                                            readonly
+                                            style="border: none; text-align: center; font-size: 16px; font-weight: 600; width: 40px; color: var(--text-primary); background: transparent; pointer-events: none;">
+                                        <button class="quantity-btn" onclick="increaseCustomQuantity()"
+                                            style="border: none; background: transparent; font-size: 20px; color: var(--text-primary); cursor: pointer; padding: 5px 10px;">+</button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="modal-actions" style="margin-top: 25px; display: flex; gap: 15px;">
+                                <button class="btn-primary btn-large" id="btnAddToCartCustom"
+                                    onclick="addCustomizedToCart()"
+                                    style="flex: 2; opacity: 0.5; cursor: not-allowed; padding: 15px; font-size: 16px; font-weight: 600; border-radius: 25px;"
+                                    disabled>Add to Cart</button>
+                                <button class="btn-secondary" onclick="closeProductModal()"
+                                    style="flex: 1; padding: 15px; font-size: 16px; font-weight: 600; border-radius: 25px; background: transparent; border: 2px solid var(--border-color); color: var(--text-primary); cursor: pointer;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+        </div>
+    </div>
+
+    <!-- Cart Panel -->
+    <div id="cartPanel" class="cart-panel">
+        <div class="cart-header">
+            <h3 id="cartHeaderTitle">Shopping Cart</h3>
+            <button class="close-cart" onclick="closeCart()">×</button>
+        </div>
+
+        <!-- Cart View (Items List) -->
+        <div id="cartView" class="cart-view">
+            <div class="cart-items" id="cartItems">
+                <!-- Cart items will be inserted here -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-summary">
+                    <div class="cart-summary-row">
+                        <span>Subtotal:</span>
+                        <span>₹<span id="cartSubtotal">0</span></span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Total Items:</span>
+                        <span id="cartItemCount">0</span>
+                    </div>
+                    <div class="cart-summary-row cart-total">
+                        <strong>Grand Total:</strong>
+                        <strong>₹<span id="cartTotal">0</span></strong>
+                    </div>
+                </div>
+                <button class="btn-checkout" onclick="showBuyView()">Checkout</button>
+            </div>
+        </div>
+
+        <!-- Buy View (Order + Form) -->
+        <div id="buyView" class="buy-view" style="display: none;">
+            <div class="buy-content">
+                <!-- Left Side: Order Summary -->
+                <div class="order-summary">
+                    <h4>Order Summary</h4>
+                    <div id="orderSummaryItems">
+                        <!-- Order items will be inserted here -->
+                    </div>
+                    <div class="order-total">
+                        <strong>Total: ₹<span id="orderTotal">0</span></strong>
+                    </div>
+                </div>
+
+                <!-- Right Side: Customer Details -->
+                <div class="customer-details">
+                    <h4>Customer Details</h4>
+                    <form id="customerForm" onsubmit="proceedToPayment(event)">
+                        <div class="form-group">
+                            <label for="customerName">Full Name *</label>
+                            <input type="text" id="customerName" name="customerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerMobile">Mobile Number *</label>
+                            <input type="tel" id="customerMobile" name="customerMobile" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerEmail">Email Address *</label>
+                            <input type="email" id="customerEmail" name="customerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerAddress">Address *</label>
+                            <input type="text" id="customerAddress" name="customerAddress" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="customerCity">City *</label>
+                                <input type="text" id="customerCity" name="customerCity" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="customerPincode">Pincode *</label>
+                                <input type="text" id="customerPincode" name="customerPincode" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-buy-now">Proceed to Payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment View (QR Code + Upload) -->
+        <div id="paymentView" class="payment-view" style="display: none;">
+            <div class="payment-content" style="text-align: center; padding: 20px;">
+                <h3>Complete Your Payment</h3>
+                <p>Scan the QR code below using any UPI app (GPay, PhonePe, Paytm)</p>
+                <div class="qr-container" style="margin: 20px auto;">
+                    <img id="paymentQrImage" src="images/payment-qr.png" alt="Payment QR Code"
+                        style="max-width: 250px; border: 2px solid #ddd; border-radius: 8px;">
+                    <p style="margin-top: 15px; font-size: 16px; color: #555;">Or pay to UPI ID:<br><strong
+                            style="font-size: 20px; color: var(--primary-color);">9715058175@pthdfc</strong></p>
+                    <a id="upiPaymentLink" href="#" class="btn-primary"
+                        style="display:inline-block; margin-top:15px; padding:12px 24px; text-decoration:none; font-size:16px;">
+                        Pay Now via UPI App
+                    </a>
+                </div>
+                <div class="amount-display"
+                    style="font-size: 24px; font-weight: bold; color: var(--primary-color); margin-bottom: 20px;">
+                    Amount to Pay: ₹<span id="paymentTotal">0</span>
+                </div>
+
+                <form id="paymentForm" onsubmit="submitOrder(event)">
+                    <div class="form-group" style="text-align: left; max-width: 400px; margin: 0 auto;">
+                        <label for="paymentScreenshot" style="font-weight: bold;">Upload Payment Screenshot *</label>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Please upload a clearly visible
+                            screenshot of your successful transaction.</p>
+                        <input type="file" id="paymentScreenshot" name="paymentScreenshot"
+                            accept="image/png, image/jpeg, image/jpg" required
+                            style="width: 100%; padding: 10px; border: 1px dashed #ccc; border-radius: 6px;">
+                    </div>
+                    <button type="submit" class="btn-primary btn-large"
+                        style="margin-top: 25px; width: 100%; max-width: 400px;" id="btnConfirmOrder">I Have Paid -
+                        Place Order</button>
+                    <button type="button" class="btn-secondary" style="margin-top: 10px; width: 100%; max-width: 400px;"
+                        onclick="backToShipping()">Back to Shipping Details</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Overlay -->
+    <div id="cartOverlay" class="cart-overlay" onclick="closeCart()"></div>
+
+    <!-- User Wishlist Sidebar -->
+    <div id="wishlistModal" class="cart-panel">
+        <div class="cart-header">
+            <h3>My Wishlist <span>❤️</span></h3>
+            <button class="close-cart" onclick="closeWishlistModal()">×</button>
+        </div>
+        <div class="cart-items" id="wishlistContent">
+            <!-- Dynamically populated via Javascript -->
+        </div>
+    </div>
+
+    <!-- Login/Signup Modal -->
+    <div id="loginSignupModal" class="auth-modal hidden">
+        <!-- Login Card -->
+        <div id="loginCard" class="auth-card">
+            <!-- Square close button at top-right corner -->
+            <button class="auth-close-square" onclick="closeLoginSignup()">×</button>
+
+            <h2>Sign in to your account</h2>
+
+            <form onsubmit="handleLogin(event)" class="auth-form-content">
+                <div class="auth-input-group">
+                    <label for="loginEmail">Email</label>
+                    <div class="auth-input-wrapper">
+                        <input id="loginEmail" type="email" placeholder="Enter your email" required>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="loginPassword">Password</label>
+                    <div class="auth-input-wrapper">
+                        <input id="loginPassword" type="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn">Sign In</button>
+            </form>
+
+            <button onclick="loginWithGoogle()" class="auth-google-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4" />
+                    <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853" />
+                    <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05" />
+                    <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335" />
+                </svg>
+                <span>Continue with Google</span>
+            </button>
+
+            <div class="auth-switch">
+                <span>Don't have an account?</span>
+                <button class="auth-switch-btn" onclick="showSignupCard()">Sign up</button>
+            </div>
+        </div>
+
+        <!-- Signup Card (Hidden by default) -->
+        <div id="signupCard" class="auth-card" style="display: none;">
+            <!-- Square close button at top-right corner -->
+            <button class="auth-close-square" onclick="closeLoginSignup()">×</button>
+
+            <h2>Create your account</h2>
+
+            <form onsubmit="handleSignup(event)" class="auth-form-content">
+                <div class="auth-input-group">
+                    <label for="signupName">Full Name</label>
+                    <div class="auth-input-wrapper">
+                        <input id="signupName" type="text" placeholder="Enter your full name" required>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="signupEmail">Email</label>
+                    <div class="auth-input-wrapper">
+                        <input id="signupEmail" type="email" placeholder="Enter your email" required>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="signupPassword">Password</label>
+                    <div class="auth-input-wrapper">
+                        <input id="signupPassword" type="password" placeholder="Create a strong password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn">Create Account</button>
+            </form>
+
+            <div class="auth-switch">
+                <span>Already have an account?</span>
+                <button class="auth-switch-btn" onclick="showLoginCard()">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Overlay -->
+    <div id="cartOverlay" class="cart-overlay" onclick="closeCart()"></div>
+
+    <!-- User Orders Modal -->
+    <div id="userOrdersModal" class="cart-panel">
+        <div class="cart-header">
+            <h3>My Orders</h3>
+            <button class="close-cart" onclick="closeUserOrders()">×</button>
+        </div>
+        <div class="cart-items" id="userOrdersList">
+            <!-- Orders dynamically populated -->
+        </div>
+    </div>
+    <div id="userOrdersOverlay" class="cart-overlay" style="z-index: 1001;" onclick="closeUserOrders()"></div>
+
+    <!-- Specific Order Details Modal -->
+    <div id="orderDetailsOverlay" class="cart-overlay" style="z-index: 2004;" onclick="closeOrderDetails()"></div>
+    <div id="orderDetailsModal" class="order-details-modal">
+        <div class="order-details-header">
+            <h3>Order Details</h3>
+            <button class="order-details-close" onclick="closeOrderDetails()">×</button>
+        </div>
+        <div class="order-details-content" id="orderDetailsContent">
+            <!-- Dynamic order details populated here -->
+        </div>
+    </div>
+
+    <!-- Interactive Size Guide Modal -->
+    <div id="sizeGuideModal" class="product-modal" style="z-index: 3000;">
+        <div class="modal-overlay" onclick="closeSizeGuide()"></div>
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="modal-close" onclick="closeSizeGuide()">×</button>
+            <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary-color);">Basket Size Guide 📏</h2>
+            <p style="text-align: center; margin-bottom: 30px; color: var(--text-secondary);">Here is a quick reference to help you visualize our 3D Dimensions in your home.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Small Basket -->
+                <div style="display: flex; align-items: center; background: var(--bg-secondary); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="width: 80px; height: 80px; border: 2px dashed #94a3b8; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #64748b; font-size: 14px; background: #fff; flex-shrink: 0;">S</div>
+                    <div style="margin-left: 20px;">
+                        <h4 style="margin: 0 0 5px 0;">Small Basket (4" x 6")</h4>
+                        <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">Comparable to a <strong>Standard Coffee Mug</strong> or a <strong>Desktop Pen Holder</strong>. Perfect for small vanities, makeup brushes, and keys.</p>
+                    </div>
+                </div>
+
+                <!-- Medium Basket -->
+                <div style="display: flex; align-items: center; background: var(--bg-secondary); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="width: 100px; height: 100px; border: 2px dashed #64748b; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569; font-size: 16px; background: #fff; flex-shrink: 0;">M</div>
+                    <div style="margin-left: 20px;">
+                        <h4 style="margin: 0 0 5px 0;">Medium Basket (8" x 10")</h4>
+                        <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">Comparable to a <strong>Standard Hardcover Book</strong> or a <strong>Countertop Fruit Bowl</strong>. Great for hand towels, fruit, or organizing pantry snacks.</p>
+                    </div>
+                </div>
+
+                <!-- Large Basket -->
+                <div style="display: flex; align-items: center; background: var(--bg-secondary); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="width: 120px; height: 120px; border: 2px dashed #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1e293b; font-size: 20px; background: #fff; flex-shrink: 0;">L</div>
+                    <div style="margin-left: 20px;">
+                        <h4 style="margin: 0 0 5px 0;">Large Basket (12" x 14")</h4>
+                        <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">Comparable to a <strong>Stacked Laundry Pile</strong> or a <strong>Mid-size Houseplant Pot</strong>. Ideal for blankets, dirty laundry, or large children's toys.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <button class="btn-primary" onclick="closeSizeGuide()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="customized.js?v=1"></script>
+</body>
+
+</html>

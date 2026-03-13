@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Connection Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Supabase Connection Test</h1>
+    <div id="status">Testing connection...</div>
+    <div id="user-info"></div>
+    
+    <script>
+        // Test Supabase connection
+        const supabase = window.supabase.createClient(
+            'https://qcyrfudyumcfdbcorcrc.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+        );
+        
+        // Test connection
+        supabase.auth.getSession().then(({ data, error }) => {
+            const statusDiv = document.getElementById('status');
+            const userDiv = document.getElementById('user-info');
+            
+            if (error) {
+                statusDiv.innerHTML = '❌ Connection Failed: ' + error.message;
+                statusDiv.style.color = 'red';
+            } else {
+                statusDiv.innerHTML = '✅ Supabase Connected Successfully!';
+                statusDiv.style.color = 'green';
+                
+                if (data.session?.user) {
+                    userDiv.innerHTML = 'Logged in as: ' + data.session.user.email;
+                } else {
+                    userDiv.innerHTML = 'No active session';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

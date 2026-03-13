@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Verify Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        /* Copy exact styles from main app */
+        .btn-login {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .btn-login:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Final Verify Test</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Final Verification Test</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Final Verification</h3>
+            <p>Checking if main application login/signup works correctly...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testLoginButton()">1. Test Login Button</button>
+        <button class="test-button" onclick="testModal()">2. Test Modal</button>
+        <button class="test-button" onclick="testFunctions()">3. Test Functions</button>
+        <button class="test-button" onclick="testComplete()">4. Test Complete</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <!-- Login/Signup Modal -->
+    <div id="loginSignupModal" class="auth-modal hidden">
+        <div class="auth-card">
+            <button class="auth-close" onclick="closeLoginSignup()">×</button>
+
+            <!-- Signup -->
+            <input id="signupName" type="text" placeholder="Full Name">
+            <input id="signupEmail" type="email" placeholder="Email">
+            <input id="signupPassword" type="password" placeholder="Password">
+            <button onclick="handleSignup()">Create Account</button>
+
+            <hr>
+
+            <!-- Login -->
+            <input id="loginEmail" type="email" placeholder="Email">
+            <input id="loginPassword" type="password" placeholder="Password">
+            <button onclick="handleLogin()">Login</button>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function testLoginButton() {
+            const testResults = document.getElementById('testResults');
+            const loginBtn = document.querySelector('.btn-login');
+            
+            if (loginBtn) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Login Button Test Results</div>
+                    <h4>🔍 Button Properties:</h4>
+                    <p>✅ Button exists: Yes</p>
+                    <p>✅ Button text: "${loginBtn.textContent}"</p>
+                    <p>✅ Button class: "${loginBtn.className}"</p>
+                    <p>✅ Button onclick: ${loginBtn.onclick ? 'Set to function' : 'Not set'}</p>
+                    <p>✅ Button href: ${loginBtn.href || 'Not set'}</p>
+                    <p>✅ Button parent: ${loginBtn.parentElement ? loginBtn.parentElement.tagName : 'Not set'}</p>
+                    <h4>🎉 Expected:</h4>
+                    <p>✅ Login button should be visible and clickable</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Login Button Not Found</div>
+                    <p>❌ Button with .btn-login class not found</p>
+                `;
+            }
+        }
+        
+        function testModal() {
+            const testResults = document.getElementById('testResults');
+            const modal = document.getElementById('loginSignupModal');
+            
+            if (modal) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Modal Test Results</div>
+                    <h4>🔍 Modal Properties:</h4>
+                    <p>✅ Modal exists: Yes</p>
+                    <p>✅ Modal ID: ${modal.id}</p>
+                    <p>✅ Modal class: "${modal.className}"</p>
+                    <p>✅ Modal display: ${modal.style.display}</p>
+                    <h4>🎉 Expected:</h4>
+                    <p>✅ Modal should be hidden initially and show when login button clicked</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Modal Not Found</div>
+                    <p>❌ Modal element not found</p>
+                `;
+            }
+        }
+        
+        function testFunctions() {
+            const testResults = document.getElementById('testResults');
+            
+            // Test global functions
+            const openFunc = typeof window.openLoginSignup === 'function';
+            const closeFunc = typeof window.closeLoginSignup === 'function';
+            const logoutFunc = typeof window.handleLogout === 'function';
+            
+            testResults.innerHTML = `
+                <div class="success">✅ Functions Test Results</div>
+                    <h4>🔍 Global Functions:</h4>
+                    <p>✅ openLoginSignup: ${openFunc ? 'Available' : 'Not available'}</p>
+                    <p>✅ closeLoginSignup: ${closeFunc ? 'Available' : 'Not available'}</p>
+                    <p>✅ handleLogout: ${logoutFunc ? 'Available' : 'Not available'}</p>
+                    <h4>🎉 Expected:</h4>
+                    <p>✅ All global functions should be available for login/signup to work</p>
+                `;
+            }
+        }
+        
+        function testComplete() {
+            const testResults = document.getElementById('testResults');
+            
+            // Final comprehensive test
+            const loginBtn = document.querySelector('.btn-login');
+            const modal = document.getElementById('loginSignupModal');
+            const allButtons = document.querySelectorAll('button');
+            const allInputs = document.querySelectorAll('input');
+            
+            // Overall status
+            const allElementsExist = loginBtn && modal && allButtons.length > 0 && allInputs.length > 0;
+            const allFunctionsWork = typeof window.openLoginSignup === 'function' && typeof window.closeLoginSignup === 'function' && typeof window.handleLogout === 'function';
+            
+            testResults.innerHTML = `
+                <div class="success">🎉 Final Test Complete</div>
+                    <h4>🔍 Overall Status:</h4>
+                    <p>✅ Login Button: ${loginBtn ? 'Found' : 'Not Found'}</p>
+                    <p>✅ Modal: ${modal ? 'Found' : 'Not Found'}</p>
+                    <p>✅ All Buttons: ${allButtons.length}</p>
+                    <p>✅ All Inputs: ${allInputs.length}</p>
+                    <p>✅ Global Functions: ${allFunctionsWork ? 'Working' : 'Not Working'}</p>
+                    <h4>🔍 Final Result:</h4>
+                    <p>${allElementsExist && allFunctionsWork ? 
+                        '✅ Everything is working correctly!' : 
+                        '❌ Some components are not working'}</p>
+                `;
+            }
+        }
+        
+        // Mock functions for testing
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showNotification('Please enter email and password');
+                return;
+            }
+            
+            showNotification('Login test successful!');
+            console.log('Login test passed:', { email, password: '***' });
+        }
+        
+        function handleSignup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!name || !email || !password) {
+                showNotification('Please fill in all fields');
+                return;
+            }
+            
+            showNotification('Signup test successful!');
+            console.log('Signup test passed:', { name, email, password: '***' });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            console.log('✅ Final verification test ready');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Persistent Button Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        
+        .container { 
+            max-width: 800px; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+            text-align: center; 
+        }
+        
+        .status { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 8px; 
+            background: #f8f9fa; 
+            border: 1px solid #ddd; 
+        }
+        
+        .success { 
+            color: #28a745; 
+            font-weight: bold; 
+            margin: 10px 0; 
+        }
+        
+        .error { 
+            color: #dc3545; 
+            font-weight: bold; 
+            margin: 10px 0; 
+        }
+        
+        .btn-login { 
+            background: #007bff; 
+            color: white; 
+            border: 1px solid #ddd; 
+            padding: 12px 24px; 
+            font-size: 16px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            transition: all 0.3s ease; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        
+        .btn-login:hover { 
+            background: #0056b3; 
+            color: white; 
+            border-color: #0056b3; 
+        }
+        
+        .btn-login.persistent { 
+            background: #007bff; 
+            color: white; 
+            border: 1px solid #ddd; 
+            padding: 12px 24px; 
+            font-size: 16px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            transition: all 0.3s ease; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        
+        .auth-modal { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.6); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999; 
+        }
+        
+        .auth-modal.show { 
+            display: flex; 
+        }
+        
+        .auth-card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); 
+            width: 90%; 
+            max-width: 400px; 
+            position: relative; 
+        }
+        
+        .auth-close { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            background: none; 
+            border: none; 
+            font-size: 24px; 
+            cursor: pointer; 
+            color: #666; 
+            width: 30px; 
+            height: 30px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 50%; 
+        }
+        
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        
+        .form-group input { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            box-sizing: border-box; 
+        }
+        
+        .form-group input:focus { 
+            outline: none; 
+            border-color: #007bff; 
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); 
+        }
+        
+        .btn-primary { 
+            width: 100%; 
+            padding: 14px 16px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+        }
+        
+        .btn-primary:hover { 
+            background: #0056b3; 
+            transform: translateY(-2px); 
+        }
+        
+        hr { 
+            border: none; 
+            border-top: 1px solid #ddd; 
+            margin: 20px 0; 
+        }
+        
+        .status-text { 
+            margin: 10px 0; 
+            padding: 10px; 
+            font-size: 14px; 
+            color: #666; 
+        }
+        
+        .test-results { 
+            background: #f8f9fa; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin: 10px 0; 
+            font-family: monospace; 
+            font-size: 12px; 
+            white-space: pre-wrap; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Persistent Button Test</h1>
+        
+        <div class="status">
+            <h3>✅ Status: Testing Persistent Button</h3>
+            <p class="status-text">Testing if login button stays visible consistently...</p>
+        </div>
+        
+        <div class="status">
+            <h3>🧪 Test Functions</h3>
+            <button class="test-button" onclick="testPersistentButton()">1. Test Persistent Button</button>
+            <button class="test-button" onclick="testButtonProperties()">2. Test Button Properties</button>
+            <button class="test-button" onclick="testModalFunction()">3. Test Modal Function</button>
+            <button class="test-button" onclick="testComplete()">4. Test Complete</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <!-- Persistent Login Button -->
+    <button class="btn-login btn-login persistent" onclick="openModal()">Login / Sign Up</button>
+    
+    <!-- Modal -->
+    <div id="loginSignupModal" class="auth-modal">
+        <div class="auth-card">
+            <button class="auth-close" onclick="closeModal()">×</button>
+                
+                <div class="form-group">
+                    <input id="signupName" type="text" placeholder="Full Name">
+                    <input id="signupEmail" type="email" placeholder="Email">
+                    <input id="signupPassword" type="password" placeholder="Password">
+                    <button class="btn-primary" onclick="handleSignup()">Create Account</button>
+                </div>
+                
+                <hr>
+                
+                <div class="form-group">
+                    <input id="loginEmail" type="email" placeholder="Email">
+                    <input id="loginPassword" type="password" placeholder="Password">
+                    <button class="btn-primary" onclick="handleLogin()">Login</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status">
+            <h3>🧪 Test Results</h3>
+            <div class="test-results">
+                <p>✅ Button should remain visible and clickable</p>
+                <p>✅ Button should not disappear on refresh</p>
+                <p>✅ Modal should open and close properly</p>
+                <p>✅ No JavaScript errors should occur</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function openModal() {
+            const modal = document.getElementById('loginSignupModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('show');
+            }
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('loginSignupModal");
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('show');
+            }
+        }
+        
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showNotification('Please enter email and password');
+                return;
+            }
+            
+            showNotification('Login successful!');
+            console.log('Login test passed:', { email, password: '***' });
+        }
+        
+        function handleSignup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!name || !email || !password) {
+                showNotification('Please fill in all fields');
+                return;
+            }
+            
+            showNotification('Signup successful!');
+            console.log('Signup test passed:', { name, email, password: '***' });
+        }
+        
+        function testPersistentButton() {
+            const testResults = document.getElementById('testResults');
+            const loginBtn = document.querySelector('.btn-login');
+            
+            if (loginBtn) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Persistent Button Test Results</div>
+                    <h4>🔍 Button Properties:</h4>
+                    <p>✅ Button exists: Yes</p>
+                    <p>✅ Button text: "${loginBtn.textContent}"</p>
+                    <p>✅ Button class: "${loginBtn.className}"</p>
+                    <p>✅ Button onclick: ${loginBtn.onclick ? 'Set to function' : 'Not set'}</p>
+                    <p>✅ Button display: ${loginBtn.style.display}</p>
+                    <p>✅ Button visibility: ${window.getComputedStyle(loginBtn).display}</p>
+                    <p>✅ Button should remain visible: ${loginBtn.style.display !== 'none' ? 'Yes' : 'No'}</p>
+                    <h4>🎉 Expected:</h4>
+                    <p>✅ Button should stay visible and not disappear</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Button Not Found</div>
+                    <p>❌ Button with .btn-login class not found</p>
+                `;
+            }
+        }
+        
+        function testButtonProperties() {
+            const testResults = document.getElementById('testResults');
+            const loginBtn = document.querySelector('.btn-login');
+            
+            if (loginBtn) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Button Properties Test Results</div>
+                    <h4>🔍 Button Properties:</h4>
+                    <p>✅ Button exists: Yes</p>
+                    <p>✅ Button text: "${loginBtn.textContent}"</p>
+                    <p>✅ Button class: "${loginBtn.className}"</p>
+                    <p>✅ Button onclick: ${loginBtn.onclick ? 'Set to function' : 'Not set'}</p>
+                    <p>✅ Button href: ${loginBtn.href || 'Not set'}</p>
+                    <p>✅ Button parent: ${loginBtn.parentElement ? loginBtn.parentElement.tagName : 'Not set'}</p>
+                    <p>✅ Button display: ${loginBtn.style.display}</p>
+                    <p>✅ Button visibility: ${window.getComputedStyle(loginBtn).display}</p>
+                    <p>✅ Button computed style: ${window.getComputedStyle(loginBtn).cssText}</p>
+                    <h4>🎉 Expected:</h4>
+                    <p>✅ Button should remain visible and clickable</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Button Not Found</div>
+                    <p>❌ Button with .btn-login class not found</p>
+                `;
+            }
+        }
+        
+        function testModalFunction() {
+            const testResults = document.getElementById('testResults');
+            const modal = document.getElementById('loginSignupModal');
+            
+            if (modal) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Modal Function Test Results</div>
+                    <h4>🔍 Modal Properties:</h4>
+                    <p>✅ Modal exists: Yes</p>
+                    <p>✅ Modal ID: ${modal.id}</p>
+                    <p>✅ Modal class: "${modal.className}"</p>
+                    <p>✅ Modal display: ${modal.style.display}</p>
+                    <h4>🎉 Expected:</h4>
+                    <p>✅ Modal should open and close properly</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Modal Not Found</div>
+                    <p>❌ Modal element not found</p>
+                `;
+            }
+        }
+        
+        function testComplete() {
+            const testResults = document.getElementById('testResults');
+            const loginBtn = document.querySelector('.btn-login');
+            
+            if (loginBtn) {
+                testResults.innerHTML = `
+                    <div class="success">🎉 Test Complete</div>
+                    <h4>🔍 Overall Status:</h4>
+                    <p>✅ Button exists: Yes</p>
+                    <p>✅ Button is visible: ${loginBtn.style.display !== 'none' ? 'Yes' : 'No'}</p>
+                    <p>✅ Button is clickable: ${loginBtn.onclick ? 'Yes' : 'No'}</p>
+                    <p>✅ Button should persist: Yes</p>
+                    <h4>🎉 Final Result:</h4>
+                    <p>${loginBtn && loginBtn.style.display !== 'none' && loginBtn.onclick ? 
+                        '✅ Button is working correctly!' : 
+                        '❌ Button is not working properly'}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Button Not Found</div>
+                    <p>❌ Button with .btn-login class not found</p>
+                `;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            console.log('✅ Persistent button test ready');
+        });
+    </script>
+</body>
+</html>

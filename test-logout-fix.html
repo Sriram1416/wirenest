@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logout Fix Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .profile-display { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; min-height: 60px; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        .error { background: #f44336; }
+        
+        /* Profile Styles */
+        .profile-button {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .profile-button:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            border: 2px solid #ddd;
+        }
+        
+        .profile-email {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <h1>Logout Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Logout Function</h2>
+        <button class="test-button" onclick="testLoginWithEmail()">Login with Email</button>
+        <button class="test-button" onclick="testLoginWithGoogle()">Login with Google</button>
+        <button class="test-button" onclick="testLogout()">Test Logout</button>
+        <button class="test-button" onclick="checkCurrentState()">Check Current State</button>
+        
+        <div id="profileDisplay" class="profile-display">
+            <h3>Current Profile Display:</h3>
+            <div id="profileContent">Not logged in</div>
+        </div>
+        
+        <div id="debugInfo">
+            <h3>Debug Information:</h3>
+            <div id="debugContent">Ready to test</div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function updateNavbarForSession(session) {
+            const profileContent = document.getElementById('profileContent');
+            const debugContent = document.getElementById('debugContent');
+            
+            if (session?.user) {
+                currentUser = session.user;
+                currentSession = session;
+                
+                const provider = session.user.app_metadata?.provider || 'email';
+                const email = session.user.email;
+                const name = session.user.user_metadata?.name;
+                
+                if (provider === 'google') {
+                    profileContent.innerHTML = `
+                        <div class="profile-container">
+                            <span class="profile-email">${email}</span>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                    debugContent.innerHTML = `✅ Google user logged in: ${email}`;
+                } else {
+                    const firstLetter = (name || email.charAt(0) || 'U').toUpperCase();
+                    profileContent.innerHTML = `
+                        <div class="profile-container">
+                            <div class="profile-avatar">${firstLetter}</div>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                    debugContent.innerHTML = `✅ Email user logged in: ${firstLetter}`;
+                }
+            } else {
+                currentUser = null;
+                currentSession = null;
+                profileContent.innerHTML = 'Login / Sign Up';
+                debugContent.innerHTML = '❌ User logged out';
+            }
+        }
+        
+        function testLoginWithEmail() {
+            const mockSession = {
+                user: {
+                    email: 'test@example.com',
+                    user_metadata: { name: 'Test User' },
+                    app_metadata: { provider: 'email' }
+                }
+            };
+            updateNavbarForSession(mockSession);
+        }
+        
+        function testLoginWithGoogle() {
+            const mockSession = {
+                user: {
+                    email: 'googleuser@gmail.com',
+                    user_metadata: { name: 'Google User' },
+                    app_metadata: { provider: 'google' }
+                }
+            };
+            updateNavbarForSession(mockSession);
+        }
+        
+        function testLogout() {
+            console.log('🧪 Testing logout function...');
+            
+            // Simulate the logout function logic
+            if (confirm('Do you want to logout?')) {
+                console.log('✅ User confirmed logout');
+                
+                // Clear state immediately (like the fixed function)
+                currentUser = null;
+                currentSession = null;
+                localStorage.removeItem('wirenestLoggedIn');
+                localStorage.removeItem('wirenestEmail');
+                localStorage.removeItem('wirenestName');
+                
+                // Update UI immediately
+                updateNavbarForSession(null);
+                
+                console.log('✅ Logout completed - UI updated immediately');
+                showNotification('Logged out successfully');
+            } else {
+                console.log('❌ User cancelled logout');
+            }
+        }
+        
+        function checkCurrentState() {
+            console.log('=== CURRENT STATE ===');
+            console.log('currentUser:', currentUser);
+            console.log('currentSession:', currentSession);
+            console.log('localStorage:', {
+                loggedIn: localStorage.getItem('wirenestLoggedIn'),
+                email: localStorage.getItem('wirenestEmail'),
+                name: localStorage.getItem('wirenestName')
+            });
+            console.log('========================');
+        }
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                document.getElementById('status').innerHTML = '✅ Supabase initialized - Ready for testing';
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+            updateNavbarForSession(currentSession);
+        });
+    </script>
+</body>
+</html>

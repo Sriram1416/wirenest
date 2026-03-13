@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fixed Auth Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin: 10px 0; }
+        input { width: 300px; padding: 8px; margin: 5px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        .error { background: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>WireNest Authentication Test</h1>
+    
+    <div id="status">Initializing...</div>
+    
+    <h2>Email Login</h2>
+    <form onsubmit="testLogin(event)">
+        <div class="form-group">
+            <input type="email" name="email" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+            <input type="password" name="password" placeholder="Password" required>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+    
+    <h2>Email Signup</h2>
+    <form onsubmit="testSignup(event)">
+        <div class="form-group">
+            <input type="text" name="name" placeholder="Name" required>
+        </div>
+        <div class="form-group">
+            <input type="email" name="email" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+            <input type="password" name="password" placeholder="Password (min 6 chars)" required>
+        </div>
+        <button type="submit">Sign Up</button>
+    </form>
+    
+    <h2>Google Login</h2>
+    <button onclick="testGoogleLogin()">Login with Google</button>
+    
+    <h2>Test Actions</h2>
+    <button onclick="testLogout()">Logout</button>
+    <button onclick="checkSession()">Check Session</button>
+    <button onclick="clearStorage()">Clear Storage</button>
+    
+    <div id="userInfo"></div>
+    
+    <script>
+        var supabaseClient;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    console.log('Auth state changed:', event, session);
+                    updateUserInfo(session);
+                });
+                
+                document.getElementById('status').innerHTML = '✅ Supabase initialized - Ready for testing';
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+            }
+        }
+        
+        function testLogin(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+            
+            if (!email || !password) {
+                showNotification('Please enter email and password', 'error');
+                return;
+            }
+            
+            supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            }).then(({ data, error }) => {
+                if (error) {
+                    showNotification('Invalid email or password', 'error');
+                    console.error('Login error:', error);
+                } else if (data?.user) {
+                    showNotification('Login successful!');
+                    updateUserInfo({ user: data.user });
+                    event.target.reset();
+                } else {
+                    showNotification('Login failed', 'error');
+                }
+            }).catch(error => {
+                showNotification('Login failed', 'error');
+                console.error('Login error:', error);
+            });
+        }
+        
+        function testSignup(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const name = formData.get('name');
+            const email = formData.get('email');
+            const password = formData.get('password');
+            
+            if (!name || !email || !password) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showNotification('Please enter a valid email address', 'error');
+                return;
+            }
+            
+            supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        name: name
+                    }
+                }
+            }).then(({ data, error }) => {
+                if (error) {
+                    if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+                        showNotification('Email already exists. Please login.', 'error');
+                    } else if (error.message.includes('Password should be')) {
+                        showNotification('Password is too weak. Please choose a stronger password.', 'error');
+                    } else if (error.message.includes('Invalid email')) {
+                        showNotification('Please enter a valid email address.', 'error');
+                    } else {
+                        showNotification('Signup failed. Please try again.', 'error');
+                    }
+                    console.error('Signup error:', error);
+                } else if (data?.user) {
+                    showNotification('Account created successfully!');
+                    updateUserInfo({ user: data.user });
+                    event.target.reset();
+                } else {
+                    showNotification('Signup failed', 'error');
+                }
+            }).catch(error => {
+                showNotification('Signup failed', 'error');
+                console.error('Signup error:', error);
+            });
+        }
+        
+        function testGoogleLogin() {
+            supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: 'http://localhost:3000/threadify.html',
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    }
+                }
+            }).then(({ data, error }) => {
+                if (error) {
+                    showNotification('Google login failed: ' + error.message, 'error');
+                    console.error('Google login error:', error);
+                } else {
+                    showNotification('Redirecting to Google...');
+                }
+            }).catch(err => {
+                showNotification('Google login error: ' + err.message, 'error');
+                console.error('Google login error:', err);
+            });
+        }
+        
+        function testLogout() {
+            if (!confirm('Do you want to logout?')) {
+                return;
+            }
+            
+            supabaseClient.auth.signOut().then(({ error }) => {
+                if (error) {
+                    showNotification('Logout failed', 'error');
+                    console.error('Logout error:', error);
+                } else {
+                    showNotification('Logged out successfully');
+                    updateUserInfo(null);
+                }
+            }).catch(error => {
+                showNotification('Logout failed', 'error');
+                console.error('Logout error:', error);
+            });
+        }
+        
+        async function checkSession() {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    showNotification('Session check failed', 'error');
+                    console.error('Session error:', error);
+                } else {
+                    updateUserInfo(session);
+                }
+            } catch (error) {
+                showNotification('Session check failed', 'error');
+                console.error('Session error:', error);
+            }
+        }
+        
+        function updateUserInfo(session) {
+            const userInfoDiv = document.getElementById('userInfo');
+            if (session?.user) {
+                userInfoDiv.innerHTML = `
+                    <h3>✅ Logged In</h3>
+                    <p><strong>Email:</strong> ${session.user.email}</p>
+                    <p><strong>Name:</strong> ${session.user.user_metadata?.name || 'Not set'}</p>
+                    <p><strong>Provider:</strong> ${session.user.app_metadata?.provider || 'email'}</p>
+                    <p><strong>Last Sign In:</strong> ${new Date(session.user.last_sign_in_at).toLocaleString()}</p>
+                `;
+            } else {
+                userInfoDiv.innerHTML = '<h3>🔍 Not Logged In</h3>';
+            }
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            location.reload();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+            setTimeout(checkSession, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <div id="productsGrid"></div>
+    <div id="status"></div>
+    
+    <script>
+        // Test Supabase initialization
+        let supabase;
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                document.getElementById('status').innerHTML = '✅ Supabase initialized';
+                console.log('Supabase initialized successfully');
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+                console.error('Supabase not loaded');
+            }
+        }
+        
+        // Test DOM element access
+        document.addEventListener('DOMContentLoaded', function() {
+            const productsGrid = document.getElementById('productsGrid');
+            if (productsGrid) {
+                productsGrid.innerHTML = '<p>✅ Products grid found</p>';
+            } else {
+                document.getElementById('status').innerHTML += '<br>❌ Products grid not found';
+            }
+            
+            initializeSupabase();
+        });
+    </script>
+</body>
+</html>

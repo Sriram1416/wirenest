@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Button Issue</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Button Issue</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Debug Button Issue</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Debugging Button Issue</h3>
+            <p>Checking why login button is not found...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testAllButtons()">1. Test All Buttons</button>
+        <button class="test-button" onclick="testButtonClasses()">2. Test Button Classes</button>
+        <button class="test-button" onclick="testButtonTiming()">3. Test Button Timing</button>
+        <button class="test-button" onclick="testConsoleErrors()">4. Test Console Errors</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function testAllButtons() {
+            const testResults = document.getElementById('testResults');
+            
+            // Get all buttons on page
+            const allButtons = document.querySelectorAll('button');
+            const loginButtons = Array.from(allButtons).filter(btn => 
+                btn.textContent.includes('Login') || btn.textContent.includes('Sign Up')
+            );
+            
+            testResults.innerHTML = `
+                <div class="success">🔍 All Buttons Test</div>
+                    <p>Total buttons found: ${allButtons.length}</p>
+                    <p>Login/Signup buttons: ${loginButtons.length}</p>
+                    <p>Button texts: ${loginButtons.map(btn => `"${btn.textContent}"`).join(', ')}</p>
+                    <h4>🎯 Looking for .btn-login class:</h4>
+                    <p>Checking each button for .btn-login class...</p>
+            `;
+            
+            // Check each button for the correct class
+            setTimeout(() => {
+                const buttonWithClass = document.querySelector('.btn-login');
+                const foundCorrectButton = loginButtons.some(btn => btn.classList.contains('btn-login'));
+                
+                testResults.innerHTML += `
+                    <div class="${foundCorrectButton ? 'success' : 'error'}">
+                        ${foundCorrectButton ? '✅' : '❌'} Button with .btn-login class: ${foundCorrectButton ? 'Found' : 'Not Found'}
+                    </div>
+                    <p>Button text: ${buttonWithClass ? buttonWithClass.textContent : 'Not found'}</p>
+                    <p>Button classes: ${buttonWithClass ? buttonWithClass.className : 'Not found'}</p>
+                `;
+            }, 1000);
+        }
+        
+        function testButtonClasses() {
+            const testResults = document.getElementById('testResults');
+            
+            // Get all buttons and check their classes
+            const allButtons = document.querySelectorAll('button');
+            const buttonClasses = Array.from(allButtons).map(btn => btn.className);
+            
+            testResults.innerHTML = `
+                <div class="success">🏷️ Button Classes Test</div>
+                    <p>Total buttons: ${allButtons.length}</p>
+                    <p>Button classes: ${buttonClasses.join(', ')}</p>
+                    <h4>🔍 Looking for btn-login:</h4>
+                    <p>${buttonClasses.some(cls => cls.includes('btn-login')) ? '✅ Found' : '❌ Not Found'}</p>
+                `;
+        }
+        
+        function testButtonTiming() {
+            const testResults = document.getElementById('testResults');
+            
+            testResults.innerHTML = `
+                <div class="success">⏰ Button Timing Test</div>
+                    <p>Testing button availability over time...</p>
+                    <p>Check console for timing issues</p>
+                `;
+            
+            // Test button availability at different intervals
+            let attempts = 0;
+            const maxAttempts = 5;
+            
+            const checkButton = () => {
+                attempts++;
+                const button = document.querySelector('.btn-login');
+                const found = button ? '✅' : '❌';
+                
+                testResults.innerHTML = `
+                    <div class="success">⏰ Button Timing Test</div>
+                    <p>Attempt ${attempts}/${maxAttempts}: ${found}</p>
+                    <p>Button found: ${button ? 'Yes' : 'No'}</p>
+                `;
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(intervalId);
+                }
+            };
+            
+            // Check immediately, then every 500ms
+            const intervalId = setInterval(checkButton, 500);
+            checkButton(); // Immediate check
+        }
+        
+        function testConsoleErrors() {
+            const testResults = document.getElementById('testResults');
+            
+            testResults.innerHTML = `
+                <div class="success">🐛 Console Errors Test</div>
+                    <p>Checking for JavaScript errors...</p>
+                    <p>Open browser console (F12) to see any errors</p>
+                    <h4>🔍 Common Issues:</h4>
+                    <p>1. JavaScript errors preventing button creation</p>
+                    <p>2. CSS conflicts hiding the button</p>
+                    <p>3. DOM timing issues</p>
+                    <p>4. Button created dynamically but with wrong class</p>
+                `;
+            
+            // Check for any JavaScript errors
+            setTimeout(() => {
+                try {
+                    const button = document.querySelector('.btn-login');
+                    if (button) {
+                        testResults.innerHTML += `
+                            <div class="success">✅ No JavaScript Errors Detected</div>
+                            <p>Button selector worked: ${button ? 'Yes' : 'No'}</p>
+                        `;
+                    } else {
+                        testResults.innerHTML += `
+                            <div class="error">❌ JavaScript Error</div>
+                            <p>Button selector failed</p>
+                        `;
+                    }
+                } catch (error) {
+                    testResults.innerHTML += `
+                        <div class="error">❌ JavaScript Error: ${error.message}</div>
+                        `;
+                }
+            }, 2000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            console.log('✅ Button issue debug ready');
+        });
+    </script>
+</body>
+</html>

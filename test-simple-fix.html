@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Fix Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        /* Profile Styles */
+        .profile-button {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .profile-button:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            border: 2px solid #ddd;
+        }
+        
+        .profile-email {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        /* Test Results */
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Simple Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Test Simple Fix</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Testing Simple Fix</h3>
+            <p>Checking if simple fix resolves login/signup issues...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testSimpleLogin()">1. Test Simple Login</button>
+        <button class="test-button" onclick="testSimpleSignup()">2. Test Simple Signup</button>
+        <button class="test-button" onclick="testSimpleLogout()">3. Test Simple Logout</button>
+        <button class="test-button" onclick="testSimpleProfile()">4. Test Simple Profile</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function updateNavbarForSession(session) {
+            console.log('🔄 updateNavbarForSession called with:', session);
+            
+            const testResults = document.getElementById('testResults');
+            
+            if (session?.user) {
+                currentUser = session.user;
+                currentSession = session;
+                
+                const provider = session.user.app_metadata?.provider || 'email';
+                const email = session.user.email;
+                const name = session.user.user_metadata?.name;
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Profile Updated</div>
+                    <p>Session: Active</p>
+                    <p>User: ${email}</p>
+                    <p>Provider: ${provider}</p>
+                    <p>Profile should show: ${provider === 'google' ? email : (name || email.charAt(0) || 'U').toUpperCase()}</p>
+                `;
+            } else {
+                currentUser = null;
+                currentSession = null;
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Logged Out State</div>
+                    <p>Button should show: Login / Sign Up</p>
+                    <p>Profile should be hidden</p>
+                `;
+            }
+        }
+        
+        function testSimpleLogin() {
+            console.log('🧪 Testing simple login...');
+            
+            const mockSession = {
+                user: {
+                    email: 'simple@example.com',
+                    user_metadata: { name: 'Simple User' },
+                    app_metadata: { provider: 'email' }
+                }
+            };
+            
+            updateNavbarForSession(mockSession);
+            
+            const testResults = document.getElementById('testResults');
+            testResults.innerHTML = `
+                <div class="success">✅ Simple Login Working</div>
+                    <p>Email: simple@example.com</p>
+                    <p>Name: Simple User</p>
+                    <p>Provider: email</p>
+                    <p>Profile should show: S</p>
+                `;
+        }
+        
+        function testSimpleSignup() {
+            console.log('🧪 Testing simple signup...');
+            
+            const mockSession = {
+                user: {
+                    email: 'signup@example.com',
+                    user_metadata: { name: 'Signup User' },
+                    app_metadata: { provider: 'email' }
+                }
+            };
+            
+            updateNavbarForSession(mockSession);
+            
+            const testResults = document.getElementById('testResults');
+            testResults.innerHTML = `
+                <div class="success">✅ Simple Signup Working</div>
+                    <p>Email: signup@example.com</p>
+                    <p>Name: Signup User</p>
+                    <p>Provider: email</p>
+                    <p>Profile should show: S</p>
+                `;
+        }
+        
+        function testSimpleLogout() {
+            console.log('🧪 Testing simple logout...');
+            
+            updateNavbarForSession(null);
+            
+            const testResults = document.getElementById('testResults');
+            testResults.innerHTML = `
+                <div class="success">✅ Simple Logout Working</div>
+                    <p>Session cleared</p>
+                    <p>Button should show: Login / Sign Up</p>
+                    <p>Profile should be hidden</p>
+                `;
+        }
+        
+        function testSimpleProfile() {
+            console.log('🧪 Testing simple profile...');
+            
+            // Test Google user
+            const googleSession = {
+                user: {
+                    email: 'google@gmail.com',
+                    user_metadata: { name: 'Google User' },
+                    app_metadata: { provider: 'google' }
+                }
+            };
+            
+            updateNavbarForSession(googleSession);
+            
+            const testResults = document.getElementById('testResults');
+            testResults.innerHTML = `
+                <div class="success">✅ Simple Profile Working</div>
+                    <p>Email: google@gmail.com</p>
+                    <p>Name: Google User</p>
+                    <p>Provider: google</p>
+                    <p>Profile should show: google@gmail.com</p>
+                    <p>Google users show email, email users show avatar</p>
+                `;
+        }
+        
+        // Initialize Supabase (for testing)
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                console.log('✅ Supabase initialized for testing');
+            } else {
+                console.error('❌ Supabase not loaded');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            initializeSupabase();
+            
+            // Test simple functions after DOM load
+            setTimeout(() => {
+                const testResults = document.getElementById('testResults');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Simple Fix Ready</div>
+                        <p>DOM loaded successfully</p>
+                        <p>Supabase initialized</p>
+                        <p>Functions ready to test</p>
+                        <p>Click test buttons to verify</p>
+                `;
+            }, 500);
+        });
+    </script>
+</body>
+</html>

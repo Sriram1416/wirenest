@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Profile Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        /* Profile Styles */
+        .profile-button {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .profile-button:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            border: 2px solid #ddd;
+        }
+        
+        .profile-email {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Profile Display</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Debug Profile Display</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Debugging Profile Display</h3>
+            <p>Checking all function calls and state...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testFunctionExists()">1. Test Function Exists</button>
+        <button class="test-button" onclick="testButtonExists()">2. Test Button Exists</button>
+        <button class="test-button" onclick="testManualUpdate()">3. Test Manual Update</button>
+        <button class="test-button" onclick="testSessionState()">4. Test Session State</button>
+        
+        <div id="debugInfo" class="debug-info">
+            <h3>📊 Debug Information:</h3>
+            <div id="debugResults">Click test buttons to see debug info</div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function updateNavbarForSession(session) {
+            console.log('🔄 updateNavbarForSession called with:', session);
+            
+            const loginBtn = document.querySelector('.btn-login');
+            const debugResults = document.getElementById('debugResults');
+            
+            if (!loginBtn) {
+                debugResults.innerHTML = `
+                    <div class="error">❌ Login Button Not Found</div>
+                    <p>Button with class .btn-login not found</p>
+                `;
+                return;
+            }
+            
+            if (session?.user) {
+                currentUser = session.user;
+                currentSession = session;
+                
+                const provider = session.user.app_metadata?.provider || 'email';
+                const email = session.user.email;
+                const name = session.user.user_metadata?.name;
+                
+                if (provider === 'google') {
+                    loginBtn.innerHTML = `
+                        <div class="profile-container">
+                            <span class="profile-email">${email}</span>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                } else {
+                    const firstLetter = (name || email.charAt(0) || 'U').toUpperCase();
+                    loginBtn.innerHTML = `
+                        <div class="profile-container">
+                            <div class="profile-avatar">${firstLetter}</div>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                }
+                
+                loginBtn.onclick = logout;
+                loginBtn.classList.add('profile-button');
+                
+                debugResults.innerHTML = `
+                    <div class="success">✅ Profile Updated</div>
+                    <p>Session: Active</p>
+                    <p>User: ${email}</p>
+                    <p>Provider: ${provider}</p>
+                    <p>Button HTML: ${loginBtn.innerHTML.substring(0, 100)}...</p>
+                    <p>Button Class: ${loginBtn.className}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                `;
+            } else {
+                currentUser = null;
+                currentSession = null;
+                loginBtn.innerHTML = 'Login / Sign Up';
+                loginBtn.onclick = openLoginSignup;
+                loginBtn.classList.remove('profile-button');
+                
+                debugResults.innerHTML = `
+                    <div class="success">✅ Logged Out State</div>
+                    <p>Button HTML: ${loginBtn.innerHTML}</p>
+                    <p>Button Class: ${loginBtn.className}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                `;
+            }
+        }
+        
+        function testFunctionExists() {
+            const debugResults = document.getElementById('debugResults');
+            
+            if (typeof updateNavbarForSession === 'function') {
+                debugResults.innerHTML = `
+                    <div class="success">✅ Function Exists</div>
+                    <p>updateNavbarForSession function exists</p>
+                `;
+            } else {
+                debugResults.innerHTML = `
+                    <div class="error">❌ Function Missing</div>
+                    <p>updateNavbarForSession function not found</p>
+                `;
+            }
+        }
+        
+        function testButtonExists() {
+            const loginBtn = document.querySelector('.btn-login');
+            const debugResults = document.getElementById('debugResults');
+            
+            if (loginBtn) {
+                debugResults.innerHTML = `
+                    <div class="success">✅ Button Found</div>
+                    <p>Button HTML: ${loginBtn.innerHTML}</p>
+                    <p>Button Class: ${loginBtn.className}</p>
+                    <p>Button Click Handler: ${loginBtn.onclick !== null ? 'Set' : 'Not Set'}</p>
+                `;
+            } else {
+                debugResults.innerHTML = `
+                    <div class="error">❌ Button Not Found</div>
+                    <p>Button with class .btn-login not found</p>
+                `;
+            }
+        }
+        
+        function testManualUpdate() {
+            console.log('🔄 Testing manual update...');
+            
+            const mockSession = {
+                user: {
+                    email: 'manual@example.com',
+                    user_metadata: { name: 'Manual User' },
+                    app_metadata: { provider: 'email' }
+                }
+            };
+            
+            updateNavbarForSession(mockSession);
+            
+            setTimeout(() => {
+                const debugResults = document.getElementById('debugResults');
+                const loginBtn = document.querySelector('.btn-login');
+                
+                if (loginBtn) {
+                    debugResults.innerHTML = `
+                        <div class="success">✅ Manual Update Working</div>
+                        <p>Button HTML: ${loginBtn.innerHTML}</p>
+                        <p>Button Class: ${loginBtn.className}</p>
+                        <p>Button Click Handler: ${loginBtn.onclick !== null ? 'Set' : 'Not Set'}</p>
+                    `;
+                }
+            }, 2000);
+        }
+        
+        function testSessionState() {
+            console.log('🔄 Testing session state...');
+            
+            const debugResults = document.getElementById('debugResults');
+            
+            if (currentSession) {
+                debugResults.innerHTML = `
+                    <div class="success">✅ Session Active</div>
+                        <p>Current User: ${currentSession.user?.email || 'N/A'}</p>
+                        <p>Provider: ${currentSession.user?.app_metadata?.provider || 'email'}</p>
+                    `;
+            } else {
+                debugResults.innerHTML = `
+                    <div class="success">✅ Session Inactive</div>
+                        <p>No active session</p>
+                    `;
+            }
+        }
+        
+        // Initialize Supabase (for testing)
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                console.log('✅ Supabase initialized for testing');
+            } else {
+                console.error('❌ Supabase not loaded');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+            updateNavbarForSession(currentSession);
+        });
+    </script>
+</body>
+</html>

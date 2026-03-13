@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Debug</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Google OAuth Debug Tool</h1>
+    <div id="status">Initializing...</div>
+    <div id="current-url"></div>
+    <div id="debug-info"></div>
+    
+    <button onclick="debugGoogleLogin()">Debug Google Login</button>
+    <button onclick="checkSession()">Check Current Session</button>
+    <button onclick="clearStorage()">Clear Storage</button>
+    <button onclick="checkCurrentURL()">Check Current URL</button>
+    <button onclick="checkSupabaseConfig()">Check Supabase Config</button>
+    
+    <script>
+        var supabaseClient;
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                // Set up detailed auth state listener
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    console.log('=== AUTH STATE CHANGE ===');
+                    console.log('Event:', event);
+                    console.log('Session:', session);
+                    console.log('User:', session?.user);
+                    console.log('==========================');
+                    
+                    updateDebugInfo(event, session);
+                });
+                
+                document.getElementById('status').innerHTML = '✅ Supabase initialized for debugging';
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+            }
+        }
+        
+        function debugGoogleLogin() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            console.log('=== STARTING GOOGLE LOGIN ===');
+            document.getElementById('debug-info').innerHTML = 'Starting Google OAuth flow...';
+            
+            supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                redirectTo: 'http://localhost:3000/theardify.html',
+                options: {
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    }
+                }
+            }).then(({ data, error }) => {
+                console.log('=== GOOGLE LOGIN RESPONSE ===');
+                console.log('Data:', data);
+                console.log('Error:', error);
+                console.log('============================');
+                
+                if (error) {
+                    document.getElementById('debug-info').innerHTML = `
+                        <h3>❌ Google Login Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Code:</strong> ${error.status || 'Unknown'}</p>
+                        <details>
+                            <summary>Full Error Object</summary>
+                            <pre>${JSON.stringify(error, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    document.getElementById('debug-info').innerHTML = `
+                        <h3>✅ Google Login Initiated</h3>
+                        <p>Check console for details and wait for redirect...</p>
+                        <p><strong>URL:</strong> ${data?.url || 'Redirecting...'}</p>
+                    `;
+                }
+            }).catch(err => {
+                console.log('=== CATCH ERROR ===');
+                console.log('Error:', err);
+                console.log('==================');
+                
+                document.getElementById('debug-info').innerHTML = `
+                    <h3>❌ Caught Error</h3>
+                    <pre>${err.toString()}</pre>
+                `;
+            });
+        }
+        
+        function checkSession() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+                console.log('=== CURRENT SESSION ===');
+                console.log('Session:', session);
+                console.log('Error:', error);
+                console.log('====================');
+                
+                if (error) {
+                    document.getElementById('debug-info').innerHTML = `
+                        <h3>❌ Session Error</h3>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else if (session?.user) {
+                    document.getElementById('debug-info').innerHTML = `
+                        <h3>✅ Active Session</h3>
+                        <p><strong>Email:</strong> ${session.user.email}</p>
+                        <p><strong>Name:</strong> ${session.user.user_metadata?.name || 'Not set'}</p>
+                        <p><strong>Provider:</strong> ${session.user.app_metadata?.provider || 'email'}</p>
+                        <p><strong>Last Sign In:</strong> ${new Date(session.user.last_sign_in_at).toLocaleString()}</p>
+                    `;
+                } else {
+                    document.getElementById('debug-info').innerHTML = '<h3>🔍 No Active Session</h3>';
+                }
+            });
+        }
+        
+        function updateDebugInfo(event, session) {
+            const debugDiv = document.getElementById('debug-info');
+            if (event === 'SIGNED_IN' && session) {
+                debugDiv.innerHTML = `
+                    <h3>🎉 Successfully Signed In!</h3>
+                    <p><strong>User:</strong> ${session.user.email}</p>
+                    <p><strong>Provider:</strong> ${session.user.app_metadata?.provider}</p>
+                    <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                `;
+            } else if (event === 'SIGNED_OUT') {
+                debugDiv.innerHTML = '<h3>👋 Signed Out</h3>';
+            }
+        }
+        
+        function checkCurrentURL() {
+            const currentDiv = document.getElementById('current-url');
+            const urlParams = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            
+            currentDiv.innerHTML = `
+                <h3>📍 Current URL Information</h3>
+                <p><strong>Full URL:</strong> ${window.location.href}</p>
+                <p><strong>Path:</strong> ${window.location.pathname}</p>
+                <p><strong>Search Params:</strong> ${urlParams.toString() || 'None'}</p>
+                <p><strong>Hash Params:</strong> ${hashParams.toString() || 'None'}</p>
+                <p><strong>Access Token:</strong> ${hashParams.get('access_token') ? '✅ Present' : '❌ Not found'}</p>
+                <p><strong>Refresh Token:</strong> ${hashParams.get('refresh_token') ? '✅ Present' : '❌ Not found'}</p>
+            `;
+        }
+        
+        function checkSupabaseConfig() {
+            const debugDiv = document.getElementById('debug-info');
+            debugDiv.innerHTML = `
+                <h3>🔧 Supabase Configuration</h3>
+                <p><strong>Project URL:</strong> https://qcyrfudyumcfdbcorcrc.supabase.co</p>
+                <p><strong>Client ID:</strong> qcyrfudyumcfdbcorcrc</p>
+                <p><strong>Redirect URL (in code):</strong> http://localhost:3000/theardify.html</p>
+                <p><strong>Current Page:</strong> ${window.location.href}</p>
+                <br>
+                <h4>🔍 Troubleshooting Steps:</h4>
+                <ol>
+                    <li>Check Supabase Dashboard → Authentication → URL Configuration</li>
+                    <li>Ensure redirect URL is exactly: <code>http://localhost:3000/theardify.html</code></li>
+                    <li>Remove any trailing slashes or extra paths</li>
+                    <li>Save changes and wait a few minutes for propagation</li>
+                    <li>Clear browser cache and try again</li>
+                </ol>
+                <br>
+                <h4>📋 Common Issues:</h4>
+                <ul>
+                    <li>✅ Correct URL in code but wrong in dashboard</li>
+                    <li>✅ Multiple redirect URLs configured</li>
+                    <li>✅ Old cached redirect URL</li>
+                    <li>✅ Environment-specific URLs (dev vs prod)</li>
+                </ul>
+            `;
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            location.reload();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+            checkCurrentURL();
+            setTimeout(checkSession, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Calls Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Function Calls Test</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Test Function Calls</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Testing Function Calls</h3>
+            <p>Checking if login/signup functions are being called...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testOpenModal()">1. Test Open Modal</button>
+        <button class="test-button" onclick="testLoginTab()">2. Test Login Tab</button>
+        <button class="test-button" onclick="testSignupTab()">3. Test Signup Tab</button>
+        <button class="test-button" onclick="testLoginSubmit()">4. Test Login Submit</button>
+        <button class="test-button" onclick="testSignupSubmit()">5. Test Signup Submit</button>
+        <button class="test-button" onclick="testLogout()">6. Test Logout</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        let functionCallCount = 0;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function incrementFunctionCall(funcName) {
+            functionCallCount++;
+            console.log(`🔄 ${funcName} called (count: ${functionCallCount})`);
+        }
+        
+        function updateNavbarForSession(session) {
+            console.log('🔄 updateNavbarForSession called with:', session);
+            incrementFunctionCall('updateNavbarForSession');
+            
+            const loginBtn = document.querySelector('.btn-login');
+            const testResults = document.getElementById('testResults');
+            
+            if (!loginBtn) {
+                testResults.innerHTML = `
+                    <div class="error">❌ Login Button Not Found</div>
+                    <p>Button with class .btn-login not found</p>
+                `;
+                return;
+            }
+            
+            if (session?.user) {
+                currentUser = session.user;
+                currentSession = session;
+                
+                const provider = session.user.app_metadata?.provider || 'email';
+                const email = session.user.email;
+                const name = session.user.user.metadata?.name;
+                
+                if (provider === 'google') {
+                    loginBtn.innerHTML = `
+                        <div class="profile-container">
+                            <span class="profile-email">${email}</span>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                } else {
+                    const firstLetter = (name || email.charAt(0) || 'U').toUpperCase();
+                    loginBtn.innerHTML = `
+                        <div class="profile-container">
+                            <div class="profile-avatar">${firstLetter}</div>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                }
+                
+                loginBtn.onclick = logout;
+                loginBtn.classList.add('profile-button');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Profile Updated</div>
+                    <p>Session: Active</p>
+                    <p>User: ${email}</p>
+                    <p>Provider: ${provider}</p>
+                    <p>Button Clickable: Yes</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            } else {
+                currentUser = null;
+                currentSession = null;
+                loginBtn.innerHTML = 'Login / Sign Up';
+                loginBtn.onclick = openLoginSignup;
+                loginBtn.classList.remove('profile-button');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Logged Out State</div>
+                    <p>Button HTML: ${loginBtn.innerHTML}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            }
+        }
+        
+        // Mock functions for testing
+        function openLoginSignup() {
+            incrementFunctionCall('openLoginSignup');
+            const overlay = document.getElementById('loginSignupOverlay');
+            if (overlay) {
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                console.log('✅ openLoginSignup called');
+            } else {
+                console.error('❌ loginSignupOverlay not found');
+            }
+        }
+        
+        function closeLoginSignup() {
+            incrementFunctionCall('closeLoginSignup');
+            const overlay = document.getElementById('loginSignupOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+                console.log('✅ closeLoginSignup called');
+            } else {
+                console.error('❌ loginSignupOverlay not found');
+            }
+        }
+        
+        function showLoginTab() {
+            incrementFunctionCall('showLoginTab');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginTab = document.querySelector('.auth-tab.active');
+            const signupTab = document.querySelector('.auth-tab:not(.active)');
+            const testResults = document.getElementById('testResults');
+            
+            if (loginForm && signupForm && loginTab && signupTab) {
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+                
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Login Tab Active</div>
+                    <p>Login form: ${loginForm.style.display}</p>
+                    <p>Signup form: ${signupForm.style.display}</p>
+                    <p>Active tab: ${loginTab.textContent}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Elements Not Found</div>
+                    <p>Login form: ${loginForm?.style?.display || 'Not found'}</p>
+                    <p>Signup form: ${signupForm?.style?.display || 'Not found'}</p>
+                    <p>Active tab: ${loginTab?.textContent || 'Not found'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            }
+        }
+        
+        function showSignupTab() {
+            incrementFunctionCall('showSignupTab');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginTab = document.querySelector('.auth-tab.active');
+            const signupTab = document.querySelector('.auth-tab:not(.active)');
+            const testResults = document.getElementById('testResults');
+            
+            if (loginForm && signupForm && loginTab && signupTab) {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+                
+                loginTab.classList.add('active');
+                loginTab.classList.remove('active');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Signup Tab Active</div>
+                    <p>Login form: ${loginForm.style.display}</p>
+                    <p>Signup form: ${signupForm.style.display}</p>
+                    <p>Active tab: ${signupTab.textContent}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Elements Not Found</div>
+                    <p>Login form: ${loginForm?.style?.display || 'Not found'}</p>
+                    <p>Signup form: ${signupForm?.style?.display || 'Not found'}</p>
+                    <p>Active tab: ${signupTab?.textContent || 'Not found'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            }
+        }
+        
+        function handleLogin(event) {
+            incrementFunctionCall('handleLogin');
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const email = formData.get('email');
+            const password = formData.get('password');
+            
+            const testResults = document.getElementById('testResults');
+            
+            if (!email || !password) {
+                testResults.innerHTML = `
+                    <div class="error">❌ Login Failed</div>
+                    <p>Missing email or password</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+                return;
+            }
+            
+            testResults.innerHTML = `
+                    <div class="success">✅ Login Submitted</div>
+                    <p>Email: ${email}</p>
+                    <p>Password: ${'*'.repeat(password.length)}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            
+            // Reset form
+            event.target.reset();
+        }
+        
+        function handleSignup(event) {
+            incrementFunctionCall('handleSignup');
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const name = formData.get('name');
+            const email = formData.get('email');
+            const password = formData.get('password');
+            
+            const testResults = document.getElementById('testResults');
+            
+            if (!name || !email || !password) {
+                testResults.innerHTML = `
+                    <div class="error">❌ Signup Failed</div>
+                    <p>Missing fields</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+                return;
+            }
+            
+            if (password.length < 6) {
+                testResults.innerHTML = `
+                    <div class="error">❌ Signup Failed</div>
+                    <p>Password too short</p>
+                    <p>Function Calls: ${functionCallCallCount}</p>
+                `;
+                return;
+            }
+            
+            testResults.innerHTML = `
+                    <div class="success">✅ Signup Submitted</div>
+                    <p>Name: ${name}</p>
+                    <p>Email: ${email}</p>
+                    <p>Password: ${'*'.repeat(password.length)}</p>
+                    <p>Function Calls: ${functionCallCallCount}</p>
+                `;
+            
+            // Reset form
+            event.target.reset();
+        }
+        
+        function testLogout() {
+            incrementFunctionCall('logout');
+            const testResults = document.getElementById('results');
+            
+            testResults.innerHTML = `
+                    <div class="success">✅ Logout Called</div>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+        }
+        
+        // Initialize Supabase (for testing)
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                console.log('✅ Supabase initialized for testing');
+                incrementFunctionCall('initializeSupabase');
+            } else {
+                console.error('❌ Supabase not loaded');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            initializeSupabase();
+            
+            // Test if functions exist after DOM load
+            setTimeout(() => {
+                const testResults = document.getElementById('results');
+                
+                const functions = ['openLoginSignup', 'closeLoginSignup', 'showLoginTab', 'showSignupTab', 'handleLogin', 'handleSignup', 'loginWithGoogle', 'logout'];
+                let existingFunctions = [];
+                let missingFunctions = [];
+                
+                functions.forEach(funcName => {
+                    if (typeof window[funcName] === 'function') {
+                        existingFunctions.push(funcName);
+                    } else {
+                        missingFunctions.push(funcName);
+                    }
+                });
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Functions Check After DOM Load</div>
+                    <p>Existing: ${existingFunctions.join(', ')}</p>
+                    <p>Missing: ${missingFunctions.join(', ')}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

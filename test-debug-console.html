@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Console Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        .console-output {
+            background: #000;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Console Test</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Debug Console Output</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Debugging Console</h3>
+            <p>Checking for JavaScript errors and function calls...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testFunctions()">1. Test Functions</button>
+        <button class="test-button" onclick="testConsole()">2. Test Console</button>
+        <button class="test-button" onclick="clearConsole()">3. Clear Console</button>
+        
+        <div id="consoleOutput" class="console-output">
+            <h3>📊 Console Output:</h3>
+            <div id="results">Click test buttons to see console output</div>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        // Override console methods to capture all output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const consoleOutput = [];
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function logWithTimestamp(message, data = null) {
+            const timestamp = new Date().toISOString();
+            consoleOutput.push(`[${timestamp}] ${message}`, data);
+            originalLog.call(console, message, data);
+        }
+        
+        function testFunctions() {
+            logWithTimestamp('=== Testing Functions ===');
+            
+            // Test if functions exist
+            const functions = ['openLoginSignup', 'closeLoginSignup', 'showLoginTab', 'showSignupTab', 'handleLogin', 'handleSignup', 'loginWithGoogle', 'logout'];
+            const results = document.getElementById('results');
+            
+            let missingFunctions = [];
+            let existingFunctions = [];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    existingFunctions.push(funcName);
+                } else {
+                    missingFunctions.push(funcName);
+                }
+            });
+            
+            results.innerHTML = `
+                <div class="success">✅ Functions Check</div>
+                    <p>Existing: ${existingFunctions.join(', ')}</p>
+                    <p>Missing: ${missingFunctions.join(', ')}</p>
+                `;
+            
+            // Test each function
+            functions.forEach(funcName => {
+                logWithTimestamp(`Testing ${funcName}...`);
+                
+                if (typeof window[funcName] === 'function') {
+                    logWithTimestamp(`✅ ${funcName} exists and is callable`);
+                } else {
+                    logWithTimestamp(`❌ ${funcName} missing or not callable`);
+                }
+            });
+        }
+        
+        function testConsole() {
+            logWithTimestamp('=== Testing Console Output ===');
+            
+            // Test console methods
+            console.log('Testing console.log...');
+            console.error('Testing console.error...');
+            console.warn('Testing console.warn...');
+            
+            setTimeout(() => {
+                const results = document.getElementById('results');
+                results.innerHTML = `
+                    <div class="success">✅ Console Working</div>
+                    <p>Console methods are functional</p>
+                    <p>Check console output below</p>
+                `;
+            }, 1000);
+        }
+        
+        function clearConsole() {
+            consoleOutput.length = 0;
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="success">✅ Console Cleared</div>
+                    <p>Console output cleared</p>
+                `;
+            
+            // Clear the visual console
+            const consoleDiv = document.getElementById('consoleOutput');
+            if (consoleDiv) {
+                consoleDiv.innerHTML = '';
+            }
+        }
+        
+        // Initialize Supabase (for testing)
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                logWithTimestamp('✅ Supabase initialized for testing');
+            } else {
+                logWithTimestamp('❌ Supabase not loaded');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            logWithTimestamp('📱 DOM Content Loaded');
+            initializeSupabase();
+            
+            // Test if functions exist after DOM load
+            setTimeout(() => {
+                const functions = ['openLoginSignup', 'closeLoginSignup', 'showLoginTab', 'showSignupTab', 'handleLogin', 'handleSignup', 'loginWithGoogle', 'logout'];
+                const results = document.getElementById('results');
+                
+                let missingFunctions = [];
+                let existingFunctions = [];
+                
+                functions.forEach(funcName => {
+                    if (typeof window[funcName] === 'function') {
+                        existingFunctions.push(funcName);
+                    } else {
+                        missingFunctions.push(funcName);
+                    }
+                });
+                
+                results.innerHTML = `
+                    <div class="success">✅ Functions Check After DOM Load</div>
+                        <p>Existing: ${existingFunctions.join(', ')}</p>
+                        <p>Missing: ${missingFunctions.join(', ')}</p>
+                        <p>Check console below for details</p>
+                    `;
+            }, 500);
+        });
+    </script>
+</body>
+</html>

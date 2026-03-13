@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Main Debug Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        /* Copy exact styles from main app */
+        .btn-login {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .btn-login:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        /* Auth Modal Styles */
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .auth-modal.hidden {
+            display: none;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .auth-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .auth-card input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(26, 61, 99, 0.1);
+        }
+
+        .auth-card button {
+            width: 100%;
+            padding: 14px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        .auth-card button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .auth-card hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Main Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Debug Main Application</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Debugging Main App</h3>
+            <p>Checking if main app modal works correctly...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testButtonExists()">1. Test Button Exists</button>
+        <button class="test-button" onclick="testModalExists()">2. Test Modal Exists</button>
+        <button class="test-button" onclick="testModalVisible()">3. Test Modal Visible</button>
+        <button class="test-button" onclick="testFunctions()">4. Test Functions</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <!-- Login/Signup Modal -->
+    <div id="loginSignupModal" class="auth-modal hidden">
+        <div class="auth-card">
+            <button class="auth-close" onclick="closeLoginSignup()">×</button>
+
+            <!-- Signup -->
+            <input id="signupName" type="text" placeholder="Full Name">
+            <input id="signupEmail" type="email" placeholder="Email">
+            <input id="signupPassword" type="password" placeholder="Password">
+            <button onclick="handleSignup()">Create Account</button>
+
+            <hr>
+
+            <!-- Login -->
+            <input id="loginEmail" type="email" placeholder="Email">
+            <input id="loginPassword" type="password" placeholder="Password">
+            <button onclick="handleLogin()">Login</button>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function testButtonExists() {
+            const testResults = document.getElementById('testResults');
+            const loginBtn = document.querySelector('.btn-login');
+            
+            if (loginBtn) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Button Exists</div>
+                    <p>Button found: Yes</p>
+                    <p>Button class: ${loginBtn.className}</p>
+                    <p>Button text: ${loginBtn.innerHTML}</p>
+                    <p>Button onclick: ${loginBtn.onclick ? 'Set' : 'Not set'}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Button Not Found</div>
+                    <p>Button with .btn-login class not found</p>
+                `;
+            }
+        }
+        
+        function testModalExists() {
+            const testResults = document.getElementById('testResults');
+            const modal = document.getElementById('loginSignupModal');
+            
+            if (modal) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Modal Exists</div>
+                    <p>Modal found: Yes</p>
+                    <p>Modal ID: loginSignupModal</p>
+                    <p>Modal class: ${modal.className}</p>
+                    <p>Modal display: ${modal.style.display}</p>
+                    <p>Modal visibility: ${window.getComputedStyle(modal).display}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Modal Not Found</div>
+                    <p>Modal element not found</p>
+                `;
+            }
+        }
+        
+        function testModalVisible() {
+            const testResults = document.getElementById('testResults');
+            const modal = document.getElementById('loginSignupModal');
+            
+            if (modal) {
+                modal.classList.remove('hidden');
+                testResults.innerHTML = `
+                    <div class="success">✅ Modal Made Visible</div>
+                    <p>Modal class: ${modal.className}</p>
+                    <p>Modal display: ${modal.style.display}</p>
+                    <p>Modal visibility: ${window.getComputedStyle(modal).display}</p>
+                    <p>Modal should be visible now</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Modal Not Found</div>
+                    <p>Cannot make modal visible</p>
+                `;
+            }
+        }
+        
+        function testFunctions() {
+            const testResults = document.getElementById('testResults');
+            
+            // Test global functions
+            const openFunc = typeof window.openLoginSignup;
+            const closeFunc = typeof window.closeLoginSignup;
+            const handleLogoutFunc = typeof window.handleLogout;
+            
+            testResults.innerHTML = `
+                <div class="success">✅ Functions Test</div>
+                    <p>openLoginSignup: ${openFunc}</p>
+                    <p>closeLoginSignup: ${closeFunc}</p>
+                    <p>handleLogout: ${handleLogoutFunc}</p>
+                    <p>All functions should be 'function'</p>
+                `;
+        }
+        
+        // Global functions for modal (outside DOMContentLoaded)
+        window.openLoginSignup = function () {
+            const modal = document.getElementById("loginSignupModal");
+            if (!modal) {
+                console.error("Login modal not found");
+                return;
+            }
+            modal.classList.remove("hidden");
+        };
+
+        window.closeLoginSignup = function () {
+            const modal = document.getElementById("loginSignupModal");
+            if (!modal) return;
+            modal.classList.add("hidden");
+        };
+        
+        // Mock functions for testing
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showNotification('Please enter email and password');
+                return;
+            }
+            
+            showNotification('Login test successful!');
+            console.log('Login test passed:', { email, password: '***' });
+        }
+        
+        function handleSignup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!name || !email || !password) {
+                showNotification('Please fill in all fields');
+                return;
+            }
+            
+            showNotification('Signup test successful!');
+            console.log('Signup test passed:', { name, email, password: '***' });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            console.log('✅ Main debug test ready');
+        });
+    </script>
+</body>
+</html>

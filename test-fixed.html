@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Fixed Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test Fixed Supabase</h1>
+    <div id="status">Loading...</div>
+    
+    <script>
+        // Test the fixed approach
+        var supabaseClient;
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                document.getElementById('status').innerHTML = '✅ Supabase initialized successfully with no conflicts!';
+                console.log('Supabase initialized successfully');
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+                console.error('Supabase not loaded');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+        });
+    </script>
+</body>
+</html>

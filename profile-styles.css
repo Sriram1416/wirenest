@@ -1,0 +1,58 @@
+/* Profile Button Styles */
+.profile-button {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.profile-button:hover {
+    background: var(--accent-color);
+    color: white;
+    border-radius: var(--radius-md);
+}
+
+.profile-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    border: 2px solid var(--border-color);
+}
+
+.profile-email {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Ensure profile button doesn't interfere with existing navbar styles */
+.btn-login.profile-button {
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.btn-login.profile-button:hover {
+    background: rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-color);
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Google Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Final Google OAuth Test</h1>
+    <div id="status">Initializing...</div>
+    <button onclick="testFinalGoogle()">Test Google Login (Final)</button>
+    <button onclick="checkSession()">Check Session</button>
+    <div id="userInfo"></div>
+    
+    <script>
+        var supabaseClient;
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    console.log('=== AUTH STATE CHANGE ===');
+                    console.log('Event:', event);
+                    console.log('Session:', session);
+                    console.log('========================');
+                    
+                    if (event === 'SIGNED_IN' && session) {
+                        document.getElementById('status').innerHTML = '🎉 Successfully logged in with Google!';
+                        document.getElementById('userInfo').innerHTML = `
+                            <h3>Logged in as:</h3>
+                            <p><strong>Email:</strong> ${session.user.email}</p>
+                            <p><strong>Name:</strong> ${session.user.user_metadata?.name || 'Not set'}</p>
+                            <p><strong>Provider:</strong> ${session.user.app_metadata?.provider}</p>
+                        `;
+                    } else if (event === 'SIGNED_OUT') {
+                        document.getElementById('status').innerHTML = '👋 Logged out';
+                        document.getElementById('userInfo').innerHTML = '';
+                    }
+                });
+                
+                document.getElementById('status').innerHTML = '✅ Supabase initialized - Ready for testing';
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+            }
+        }
+        
+        function testFinalGoogle() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            console.log('=== TESTING GOOGLE LOGIN (FINAL) ===');
+            document.getElementById('status').innerHTML = 'Starting Google login...';
+            
+            supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: 'http://localhost:3000',
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    }
+                }
+            }).then(({ data, error }) => {
+                console.log('=== GOOGLE LOGIN RESPONSE (FINAL) ===');
+                console.log('Data:', data);
+                console.log('Error:', error);
+                console.log('====================================');
+                
+                if (error) {
+                    document.getElementById('status').innerHTML = `
+                        <h3>❌ Google Login Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Code:</strong> ${error.status || 'Unknown'}</p>
+                    `;
+                } else {
+                    document.getElementById('status').innerHTML = `
+                        <h3>✅ Google Login Initiated</h3>
+                        <p>Check console for details and wait for redirect...</p>
+                        <p><strong>URL:</strong> ${data?.url || 'Redirecting...'}</p>
+                    `;
+                }
+            }).catch(err => {
+                console.error('=== GOOGLE LOGIN CATCH (FINAL) ===');
+                console.error('Error:', err);
+                document.getElementById('status').innerHTML = `
+                    <h3>❌ Caught Error</h3>
+                    <pre>${err.toString()}</pre>
+                `;
+            });
+        }
+        
+        function checkSession() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+                if (error) {
+                    document.getElementById('status').innerHTML = `❌ Session error: ${error.message}`;
+                } else if (session?.user) {
+                    document.getElementById('status').innerHTML = '✅ Active session found';
+                    document.getElementById('userInfo').innerHTML = `
+                        <p><strong>Email:</strong> ${session.user.email}</p>
+                        <p><strong>Provider:</strong> ${session.user.app_metadata?.provider}</p>
+                    `;
+                } else {
+                    document.getElementById('status').innerHTML = '🔍 No active session';
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+        });
+    </script>
+</body>
+</html>

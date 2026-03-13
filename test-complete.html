@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Complete System Test</h1>
+    <div id="status">Testing...</div>
+    <div id="productsGrid"></div>
+    <div id="loginSignupOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div style="background:white; padding:20px; margin:50px auto; width:300px;">
+            <h3>Login Test</h3>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testSignup()">Test Signup</button>
+            <button onclick="closeTest()">Close</button>
+        </div>
+    </div>
+    
+    <script>
+        // Test variables
+        var supabaseClient;
+        let loginSignupOverlay;
+        
+        // Initialize Supabase
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                document.getElementById('status').innerHTML += '<br>✅ Supabase initialized';
+            } else {
+                document.getElementById('status').innerHTML += '<br>❌ Supabase not loaded';
+            }
+        }
+        
+        // Test login
+        function testLogin() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            supabaseClient.auth.signInWithPassword({
+                email: 'test@example.com',
+                password: '123456'
+            }).then(({ data, error }) => {
+                if (error) {
+                    alert('Login error: ' + error.message);
+                } else {
+                    alert('Login successful!');
+                }
+            });
+        }
+        
+        // Test signup
+        function testSignup() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            supabaseClient.auth.signUp({
+                email: 'newuser@example.com',
+                password: '123456',
+                options: {
+                    data: {
+                        name: 'Test User'
+                    }
+                }
+            }).then(({ data, error }) => {
+                if (error) {
+                    alert('Signup error: ' + error.message);
+                } else {
+                    alert('Signup successful!');
+                }
+            });
+        }
+        
+        // Test DOM access
+        function openTest() {
+            if (loginSignupOverlay) {
+                loginSignupOverlay.style.display = 'block';
+            } else {
+                alert('loginSignupOverlay not found');
+            }
+        }
+        
+        function closeTest() {
+            if (loginSignupOverlay) {
+                loginSignupOverlay.style.display = 'none';
+            }
+        }
+        
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            loginSignupOverlay = document.getElementById('loginSignupOverlay');
+            const productsGrid = document.getElementById('productsGrid');
+            
+            if (productsGrid) {
+                productsGrid.innerHTML = '<p>✅ Products grid found</p>';
+                document.getElementById('status').innerHTML += '<br>✅ DOM elements ready';
+            } else {
+                document.getElementById('status').innerHTML += '<br>❌ DOM elements not found';
+            }
+            
+            initializeSupabase();
+        });
+    </script>
+</body>
+</html>

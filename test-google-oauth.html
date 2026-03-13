@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Google OAuth Test</h1>
+    <div id="status">Initializing...</div>
+    <button onclick="testGoogleLogin()">Test Google Login</button>
+    <button onclick="testLogout()">Logout</button>
+    <div id="userInfo"></div>
+    
+    <script>
+        // Initialize Supabase
+        var supabaseClient;
+        
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                // Set up auth state listener
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    console.log('Auth state changed:', event, session);
+                    updateUserInfo(session);
+                });
+                
+                document.getElementById('status').innerHTML = '✅ Supabase initialized';
+            } else {
+                document.getElementById('status').innerHTML = '❌ Supabase not loaded';
+            }
+        }
+        
+        function testGoogleLogin() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: 'http://localhost:3000/threadify.html'
+                }
+            }).then(({ error }) => {
+                if (error) {
+                    console.error('Google login error:', error);
+                    alert('Google login failed: ' + error.message);
+                } else {
+                    console.log('Google login initiated');
+                }
+            });
+        }
+        
+        function testLogout() {
+            if (!supabaseClient) {
+                alert('Supabase not initialized');
+                return;
+            }
+            
+            supabaseClient.auth.signOut().then(({ error }) => {
+                if (error) {
+                    console.error('Logout error:', error);
+                    alert('Logout failed');
+                } else {
+                    console.log('Logged out successfully');
+                    updateUserInfo(null);
+                }
+            });
+        }
+        
+        function updateUserInfo(session) {
+            const userInfoDiv = document.getElementById('userInfo');
+            if (session?.user) {
+                userInfoDiv.innerHTML = `
+                    <h3>Logged in as:</h3>
+                    <p><strong>Email:</strong> ${session.user.email}</p>
+                    <p><strong>Name:</strong> ${session.user.user_metadata?.name || 'Not set'}</p>
+                    <p><strong>Provider:</strong> ${session.user.app_metadata?.provider || 'email'}</p>
+                `;
+            } else {
+                userInfoDiv.innerHTML = '<p>Not logged in</p>';
+            }
+        }
+        
+        // Handle OAuth redirect
+        async function handleOAuthRedirect() {
+            const urlHash = window.location.hash.substring(1);
+            const hashParams = new URLSearchParams(urlHash);
+            
+            const accessToken = hashParams.get('access_token');
+            const expiresAt = hashParams.get('expires_at');
+            const provider = hashParams.get('provider_token') ? 'google' : null;
+            
+            if (accessToken) {
+                console.log('=== ACCESS TOKEN FOUND ===');
+                console.log('Access Token:', accessToken);
+                console.log('Expires At:', expiresAt);
+                console.log('Provider:', provider);
+                
+                try {
+                    // Create session from access token
+                    const { data, error } = await supabaseClient.setSession({
+                        access_token: accessToken,
+                        refresh_token: hashParams.get('refresh_token')
+                    });
+                    
+                    if (error) {
+                        console.error('Session creation error:', error);
+                        document.getElementById('status').innerHTML = '❌ Session creation failed: ' + error.message;
+                        return;
+                    }
+                    
+                    if (data?.user) {
+                        console.log('Session created successfully:', data.user);
+                        document.getElementById('status').innerHTML = '✅ OAuth login successful!';
+                        updateUserInfo({ user: data.user });
+                        
+                        // Clear URL parameters
+                        window.history.replaceState({}, document.title, '/');
+                    }
+                } catch (error) {
+                    console.error('OAuth redirect error:', error);
+                    document.getElementById('status').innerHTML = '❌ OAuth redirect error: ' + error.message;
+                }
+            }
+        }
+        
+        // Check for existing session on load
+        async function checkSession() {
+            if (supabaseClient) {
+                // First check for OAuth redirect
+                await handleOAuthRedirect();
+                
+                // Then check for existing session
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error('Session check error:', error);
+                } else {
+                    updateUserInfo(session);
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSupabase();
+            setTimeout(checkSession, 1000); // Wait a bit for initialization
+        });
+    </script>
+</body>
+</html>

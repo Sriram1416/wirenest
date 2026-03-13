@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Main App Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        .status { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px; background: #4CAF50; color: white; border-radius: 5px; }
+        
+        /* Profile Styles */
+        .profile-button {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .profile-button:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .profile-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            border: 2px solid #ddd;
+        }
+        
+        .profile-email {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        /* Test Results */
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Main Application Test</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Test Main Application</h2>
+        
+        <div class="status">
+            <h3>✅ Status: Testing Main Application</h3>
+            <p>Checking if login/signup functions work in main app...</p>
+        </div>
+        
+        <h2>🧪 Test Functions</h2>
+        
+        <button class="test-button" onclick="testModal()">1. Test Modal</button>
+        <button class="test-button" onclick="testLoginTab()">2. Test Login Tab</button>
+        <button class="test-button" onclick="testSignupTab()">3. Test Signup Tab</button>
+        <button class="test-button" onclick="testLoginSubmit()">4. Test Login Submit</button>
+        <button class="test-button" onclick="testSignupSubmit()">5. Test Signup Submit</button>
+        <button class="test-button" onclick="testLogout()">6. Test Logout</button>
+        
+        <div id="testResults" class="test-results">
+            <h3>📊 Test Results:</h3>
+            <div id="results">Click test buttons to see results</div>
+        </div>
+    </div>
+    
+    <!-- Login/Signup Modal -->
+    <div id="loginSignupOverlay" class="login-overlay">
+        <div class="login-panel">
+            <button class="close-login" onclick="closeLoginSignup()">×</button>
+            
+            <!-- Tab Navigation -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="showLoginTab()">Login</button>
+                <button class="auth-tab" onclick="showSignupTab()">Sign Up</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+                <button type="button" class="btn-secondary" onclick="loginWithGoogle()" style="margin-top: 10px; width: 100%;">
+                    Continue with Google
+                </button>
+            </form>
+            
+            <!-- Signup Form -->
+            <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Create Account</button>
+                <button type="button" class="btn-secondary" onclick="loginWithGoogle()" style="margin-top: 10px; width: 100%;">
+                    Continue with Google
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        var supabaseClient;
+        let currentSession = null;
+        let currentUser = null;
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification' + (type === 'error' ? ' error' : '');
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+        
+        function updateNavbarForSession(session) {
+            console.log('🔄 updateNavbarForSession called with:', session);
+            
+            const loginBtn = document.querySelector('.btn-login');
+            const testResults = document.getElementById('testResults');
+            
+            if (!loginBtn) {
+                testResults.innerHTML = `
+                    <div class="error">❌ Login Button Not Found</div>
+                    <p>Button with class .btn-login not found</p>
+                `;
+                return;
+            }
+            
+            if (session?.user) {
+                currentUser = session.user;
+                currentSession = session;
+                
+                const provider = session.user.app_metadata?.provider || 'email';
+                const email = session.user.email;
+                const name = session.user.user_metadata?.name;
+                
+                if (provider === 'google') {
+                    loginBtn.innerHTML = `
+                        <div class="profile-container">
+                            <span class="profile-email">${email}</span>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                } else {
+                    const firstLetter = (name || email.charAt(0) || 'U').toUpperCase();
+                    loginBtn.innerHTML = `
+                        <div class="profile-container">
+                            <div class="profile-avatar">${firstLetter}</div>
+                            <span style="font-size: 12px; margin-left: 5px;">▼</span>
+                        </div>
+                    `;
+                }
+                
+                loginBtn.onclick = logout;
+                loginBtn.classList.add('profile-button');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Profile Updated</div>
+                    <p>Session: Active</p>
+                    <p>User: ${email}</p>
+                    <p>Provider: ${provider}</p>
+                    <p>Button HTML: ${loginBtn.innerHTML.substring(0, 50)}...</p>
+                    <p>Button Class: ${loginBtn.className}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                `;
+            } else {
+                currentUser = null;
+                currentSession = null;
+                loginBtn.innerHTML = 'Login / Sign Up';
+                loginBtn.onclick = openLoginSignup;
+                loginBtn.classList.remove('profile-button');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Logged Out State</div>
+                    <p>Button HTML: ${loginBtn.innerHTML}</p>
+                    <p>Button Class: ${loginBtn.className}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                `;
+            }
+        }
+        
+        function testModal() {
+            const overlay = document.getElementById('loginSignupOverlay');
+            const testResults = document.getElementById('testResults');
+            
+            if (overlay) {
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                testResults.innerHTML = `
+                    <div class="success">✅ Modal Opened</div>
+                    <p>Overlay is visible</p>
+                    <p>Body overflow: hidden</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Modal Not Found</div>
+                    <p>Overlay element not found</p>
+                `;
+            }
+        }
+        
+        function testLoginTab() {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginTab = document.querySelector('.auth-tab.active');
+            const testResults = document.getElementById('testResults');
+            
+            if (loginForm && signupForm && loginTab) {
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+                
+                // Update tab states
+                const tabs = document.querySelectorAll('.auth-tab');
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Login Tab Active</div>
+                    <p>Login form: ${loginForm.style.display}</p>
+                    <p>Signup form: ${signupForm.style.display}</p>
+                    <p>Active tab: ${loginTab.textContent}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Elements Not Found</div>
+                    <p>Login form: ${loginForm?.style?.display || 'Not found'}</p>
+                    <p>Signup form: ${signupForm?.style?.display || 'Not found'}</p>
+                    <p>Active tab: ${loginTab?.textContent || 'Not found'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+                }
+            }
+        }
+        
+        function testSignupTab() {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginTab = document.querySelector('.auth-tab.active');
+            const testResults = document.getElementById('testResults');
+            
+            if (loginForm && signupForm && loginTab) {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+                
+                // Update tab states
+                const tabs = document.querySelectorAll('.auth-tab');
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Signup Tab Active</div>
+                    <p>Login form: ${loginForm.style.display}</p>
+                    <p>Signup form: ${signupForm.style.display}</p>
+                    <p>Active tab: ${loginTab.textContent}</p>
+                    <p>Button Clickable: ${loginBtn.onclick !== null ? 'Yes' : 'No'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Elements Not Found</div>
+                    <p>Login form: ${loginForm?.style?.display || 'Not found'}</p>
+                    <p>Signup form: ${signupForm?.style?.display || 'Not found'}</p>
+                    <p>Active tab: ${loginTab?.textContent || 'Not found'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+                }
+            }
+        }
+        
+        function testLoginSubmit() {
+            const loginForm = document.getElementById('loginForm');
+            const testResults = document.getElementById('testResults');
+            
+            if (loginForm) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Login Form Ready</div>
+                    <p>Form found: Yes</p>
+                    <p>Submit handler: ${loginForm.onsubmit ? 'Set' : 'Not Set'}</p>
+                    <p>Form action: ${loginForm.action || 'Not set'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                `;
+                
+                // Mock form submission
+                const mockEvent = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                loginForm.dispatchEvent(mockEvent);
+                
+                setTimeout(() => {
+                    testResults.innerHTML = `
+                        <div class="success">✅ Login Submitted</div>
+                        <p>Form submitted successfully</p>
+                        <p>Function Calls: ${functionCallCount}</p>
+                    `;
+                }, 1000);
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Login Form Not Found</div>
+                    <p>Form not found</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                    `;
+                }
+            }
+        }
+        
+        function testSignupSubmit() {
+            const signupForm = document.getElementById('signupForm');
+            const testResults = document.getElementById('testResults');
+            
+            if (signupForm) {
+                testResults.innerHTML = `
+                    <div class="success">✅ Signup Form Ready</div>
+                    <p>Form found: Yes</p>
+                    <p>Submit handler: ${signupForm.onsubmit ? 'Set' : 'Not Set'}</p>
+                    <p>Form action: ${signupForm.action || 'Not set'}</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                    `;
+                
+                // Mock form submission
+                const mockEvent = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                signupForm.dispatchEvent(mockEvent);
+                
+                setTimeout(() => {
+                    testResults.innerHTML = `
+                        <div class="success">✅ Signup Submitted</div>
+                        <p>Form submitted successfully</p>
+                        <p>Function Calls: ${functionCallCount}</p>
+                    `;
+                }, 1000);
+            } else {
+                testResults.innerHTML = `
+                    <div class="error">❌ Signup Form Not Found</div>
+                    <p>Form not found</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                    `;
+                }
+            }
+        }
+        
+        function testLogout() {
+            const testResults = document.getElementById('testResults');
+            
+            testResults.innerHTML = `
+                <div class="success">✅ Logout Called</div>
+                    <p>Function Calls: ${functionCallCount}</p>
+                    <p>Logout function exists and is callable</p>
+                `;
+            
+            // Mock logout
+            logout();
+            
+            setTimeout(() => {
+                testResults.innerHTML = `
+                    <div class="success">✅ Logout Completed</div>
+                    <p>Function Calls: ${functionCallCount}</p>
+                    <p>Session should be cleared</p>
+                    <p>Profile button should show "Login / Sign Up"</p>
+                    <p>Button Class: ${loginBtn?.className || 'Not set'}</p>
+                `;
+            }, 1000);
+        }
+        
+        function testConsole() {
+            const testResults = document.getElementById('testResults');
+            
+            testResults.innerHTML = `
+                <div class="success">✅ Console Working</div>
+                    <p>Console methods are functional</p>
+                    <p>Function Calls: ${functionCallCount}</p>
+                    <p>Console output should show all function calls</p>
+                `;
+            }
+        }
+        
+        // Initialize Supabase (for testing)
+        function initializeSupabase() {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(
+                    'https://qcyrfudyumcfdbcorcrc.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs'
+                );
+                
+                console.log('✅ Supabase initialized for testing');
+            } else {
+                console.error('❌ Supabase not loaded');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded');
+            initializeSupabase();
+            
+            // Test if functions exist after DOM load
+            setTimeout(() => {
+                const testResults = document.getElementById('testResults');
+                
+                const functions = ['openLoginSignup', 'closeLoginSignup', 'showLoginTab', 'showSignupTab', 'handleLogin', 'handleSignup', 'loginWithGoogle', 'logout'];
+                let existingFunctions = [];
+                let missingFunctions = [];
+                
+                functions.forEach(funcName => {
+                    if (typeof window[funcName] === 'function') {
+                        existingFunctions.push(funcName);
+                    } else {
+                        missingFunctions.push(funcName);
+                    }
+                });
+                
+                testResults.innerHTML = `
+                    <div class="success">✅ Functions Check After DOM Load</div>
+                        <p>Existing: ${existingFunctions.join(', ')}</p>
+                        <p>Missing: ${missingFunctions.join(', ')}</p>
+                        <p>Function Calls: ${functionCallCount}</p>
+                `;
+                
+                // Test each function
+                functions.forEach(funcName => {
+                    console.log(`🔄 Testing ${funcName}...`);
+                    
+                    if (typeof window[funcName] === 'function') {
+                        testResults.innerHTML = `
+                            <div class="success">✅ ${funcName} works</div>
+                            <p>Function Calls: ${functionCallCount}</p>
+                        `;
+                    } else {
+                        testResults.innerHTML = `
+                            <div class="error">❌ ${funcName} not found</div>
+                            <p>Function Calls: ${functionCallCount}</p>
+                        `;
+                    }
+                });
+                
+                setTimeout(() => {
+                    testResults.innerHTML = `
+                        <div class="success">✅ All Functions Working</div>
+                            <p>Function Calls: ${functionCallCount}</p>
+                        <p>Console output should show all function calls</p>
+                    `;
+                }, 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

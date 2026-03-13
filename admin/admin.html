@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WireNest - Admin Dashboard</title>
+    <!-- Import existing styles for exact theme consistency -->
+    <link rel="stylesheet" href="../style.css?v=12">
+    <!-- Admin-specific styles -->
+    <link rel="stylesheet" href="admin.css?v=4">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="admin-body">
+
+    <!-- Admin Login Overlay -->
+    <div class="overlay" id="adminLoginOverlay" style="display:flex; z-index: 2000; flex-direction: column;">
+        <div class="auth-modal"
+            style="display:block; position:relative; max-width: 400px; width: 100%; margin: auto; transform: none;">
+            <div class="auth-header">
+                <h2>Admin Login</h2>
+                <p>Enter administrative credentials.</p>
+            </div>
+            <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label for="adminEmail">Email Address</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@wirenest.com">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">Login to
+                    Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Top Navbar -->
+    <header class="navbar admin-navbar" id="navbar" style="display: none;">
+        <div class="nav-container admin-nav-container">
+            <div class="nav-logo">
+                <h2>WireNest <span class="admin-badge">Admin</span></h2>
+            </div>
+
+            <div class="nav-actions">
+                <!-- Profile dropdown mirroring the storefront -->
+                <div class="profile-dropdown" id="profileDropdown" style="display:flex;">
+                    <div class="profile-infos" onclick="toggleProfileDropdown()">
+                        <div class="profile-avatar logged-in" id="profileAvatar">
+                            <span class="profile-letter" id="profileLetter"
+                                style="display: flex !important; align-items: center; justify-content: center; width: 100% !important; height: 100% !important; color: white !important; font-weight: 600; background: var(--primary-color);">A</span>
+                        </div>
+                    </div>
+                    <div class="profile-menu" id="profileMenu">
+                        <div class="profile-menu-header">
+                            <div class="profile-menu-avatar" id="profileMenuAvatar" style="display:none;"></div>
+                            <div class="profile-menu-name" id="profileMenuName">Admin User</div>
+                            <div class="profile-menu-email" id="profileMenuEmail">admin@wirenest.com</div>
+                        </div>
+                        <div class="profile-menu-divider"></div>
+                        <div class="profile-menu-item" onclick="handleLogout()">
+                            <span>Logout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-layout" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-link active" onclick="switchTab(event, 'dashboard')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'categories')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Categories
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'normal_products')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                    Normal Products
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'customized_products')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                        </path>
+                    </svg>
+                    Customized Products
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'stock')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                        </path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    Stock
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'cart')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    Carts
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'orders')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Orders
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'order_details')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Order Details
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'order_items')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    Order Items
+                </a>
+                <a href="#" class="sidebar-link" onclick="switchTab(event, 'users')">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Users
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="admin-main">
+            <!-- Loading Indicator -->
+            <div id="adminLoader" class="admin-loader" style="display:none;">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+
+            <!-- Tab: Dashboard Overview -->
+            <div id="tab-dashboard" class="admin-tab active">
+                <div class="admin-header-row" style="display: flex; align-items: center; gap: 12px;">
+                    <h1 style="margin: 0;">Dashboard Overview</h1>
+                    <button onclick="refreshData()" title="Refresh Dashboard"
+                        style="background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-12.28l5.57 5.57" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Total Users</h3>
+                            <p class="stat-number" id="statUsers">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orders">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Total Orders</h3>
+                            <p class="stat-number" id="statOrders">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Total Revenue</h3>
+                            <p class="stat-number" id="statRevenue">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h2>Recent Activity</h2>
+                    <div class="recent-activity-placeholder">
+                        <p>Dashboard analytics and recent events will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Users -->
+            <div id="tab-users" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>User Management</h1>
+                    <div class="search-section">
+                        <input type="text" class="search-input" id="searchUsers" placeholder="Search users...">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="admin-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Avatar</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Populated by JS -->
+                            <tr>
+                                <td colspan="5" style="text-align:center;">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Categories -->
+            <div id="tab-categories" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Categories Management</h1>
+                    <button class="btn-primary" onclick="openCrudModal('categories')">Add Category</button>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Normal Products -->
+            <div id="tab-normal_products" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Normal Products</h1>
+                    <button class="btn-primary" onclick="openCrudModal('normal_products')">Add Normal Product</button>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Size</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="normal_productsTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Customized Products -->
+            <div id="tab-customized_products" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Customized Products</h1>
+                    <button class="btn-primary" onclick="openCrudModal('customized_products')">Add Customized
+                        Product</button>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Base Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customized_productsTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Stock -->
+            <div id="tab-stock" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Inventory Stock</h1>
+                    <button class="btn-primary" onclick="openCrudModal('stock')">Add Stock Log</button>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Type</th>
+                                <th>Qty</th>
+                                <th>Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Carts -->
+            <div id="tab-cart" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Active Carts</h1>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Product ID</th>
+                                <th>Type</th>
+                                <th>Qty</th>
+                                <th>Final Price</th>
+                                <th>Specs</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Orders -->
+            <div id="tab-orders" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Order Management</h1>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>User ID</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Order Details -->
+            <div id="tab-order_details" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Shipping & Delivery Addresses</h1>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Full Address</th>
+                                <th>City / Pincode</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order_detailsTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Order Items -->
+            <div id="tab-order_items" class="admin-tab">
+                <div class="admin-header-row">
+                    <h1>Order Items Catalog</h1>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Product ID</th>
+                                <th>Type</th>
+                                <th>Qty</th>
+                                <th>Final Price</th>
+                                <th>Specs</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order_itemsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align:center;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CRUD Modal -->
+            <div class="admin-crud-overlay" id="crudModalOverlay" style="display:none;">
+                <div class="admin-crud-modal">
+                    <div class="auth-header">
+                        <h2 id="crudModalTitle">Add Record</h2>
+                        <button onclick="closeCrudModal()"
+                            style="position:absolute; top: 15px; right: 20px; background:none; border:none; cursor:pointer;">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <form id="crudForm" onsubmit="handleCrudSubmit(event)">
+                        <!-- Dynamically populated by JS -->
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Notification Toast Removed per user request -->
+
+
+    <script src="admin.js?v=7"></script>
+</body>
+
+</html>
