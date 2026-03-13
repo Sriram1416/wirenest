@@ -434,7 +434,7 @@ function renderProducts() {
                                 </div>
                             </div>
                         </div>
-                    `})}
+                    `}).join('')}
                 </div>
             </div>
         </div>
