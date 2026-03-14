@@ -292,7 +292,7 @@ function renderNormalProductsTable(data) {
             if (firstImg && firstImg.includes('/uploads/')) {
                 firstImg = `${BACKEND_URL}${firstImg.substring(firstImg.indexOf('/uploads/'))}`;
             } else if (!firstImg.startsWith('http')) {
-                firstImg = firstImg.startsWith('images') ? '../' + firstImg : firstImg;
+                firstImg = firstImg.startsWith('images') ? '../' + firstImg : '../images/' + firstImg;
             }
             imgHtml = `<img src="${firstImg}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">`;
         }
@@ -322,7 +322,7 @@ function renderCustomizedProductsTable(data) {
             if (firstImg && firstImg.includes('/uploads/')) {
                 firstImg = `${BACKEND_URL}${firstImg.substring(firstImg.indexOf('/uploads/'))}`;
             } else if (!firstImg.startsWith('http')) {
-                firstImg = firstImg.startsWith('images') ? '../' + firstImg : firstImg;
+                firstImg = firstImg.startsWith('images') ? '../' + firstImg : '../images/' + firstImg;
             }
             imgHtml = `<img src="${firstImg}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">`;
         }
@@ -643,7 +643,7 @@ function openCrudModal(table, existingDataOrId = null) {
                 if (imgSrc && imgSrc.includes('/uploads/')) {
                     imgSrc = `${BACKEND_URL}${imgSrc.substring(imgSrc.indexOf('/uploads/'))}`;
                 } else if (!imgSrc.startsWith('http') && imgSrc.trim() !== '') {
-                    imgSrc = imgSrc.startsWith('images') ? '../' + imgSrc : imgSrc;
+                    imgSrc = imgSrc.startsWith('images') ? '../' + imgSrc : '../images/' + imgSrc;
                 }
                 slotsHtml += `
                     <div style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; background: #fafafa;">
