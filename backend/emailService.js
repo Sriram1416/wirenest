@@ -7,10 +7,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
+const ADMIN_EMAIL = process.env.GMAIL_USER || 'wirenestteam@gmail.com';
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.GMAIL_USER || 'wirenestteam@gmail.com',
+        user: ADMIN_EMAIL,
         pass: process.env.GMAIL_PASS
     },
     tls: {
@@ -87,8 +89,8 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
     ` : `<p><em>No payment receipt uploaded.</em></p>`;
 
     const mailOptions = {
-        from: `WireNest System <${process.env.GMAIL_USER}>`,
-        to: process.env.GMAIL_USER, // Send to the admin
+        from: `WireNest System <${ADMIN_EMAIL}>`,
+        to: ADMIN_EMAIL, // Send to the admin
         subject: `🚨 New Order Pending Approval: #${orderId.substring(0, 8)}`,
         html: `
             <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background: #fff;">
@@ -135,7 +137,7 @@ export async function sendCustomerApprovalEmail(customerEmail, orderId, totalAmo
     if (!process.env.GMAIL_PASS || !customerEmail) return;
 
     const mailOptions = {
-        from: `WireNest Support <${process.env.GMAIL_USER}>`,
+        from: `WireNest Support <${ADMIN_EMAIL}>`,
         to: customerEmail,
         subject: `✅ Your WireNest Order is Confirmed! (#${orderId.substring(0, 8)})`,
         html: `
@@ -164,7 +166,7 @@ export async function sendCustomerShippedEmail(customerEmail, orderId) {
     if (!process.env.GMAIL_PASS || !customerEmail) return;
 
     const mailOptions = {
-        from: `WireNest Support <${process.env.GMAIL_USER}>`,
+        from: `WireNest Support <${ADMIN_EMAIL}>`,
         to: customerEmail,
         subject: `🚚 Your WireNest Order has Shipped! (#${orderId.substring(0, 8)})`,
         html: `
@@ -194,7 +196,7 @@ export async function sendCustomerDeliveredEmail(customerEmail, orderId) {
     if (!process.env.GMAIL_PASS || !customerEmail) return;
 
     const mailOptions = {
-        from: `WireNest Support <${process.env.GMAIL_USER}>`,
+        from: `WireNest Support <${ADMIN_EMAIL}>`,
         to: customerEmail,
         subject: `📦 Your WireNest Order is Delivered! (#${orderId.substring(0, 8)})`,
         html: `
