@@ -1756,7 +1756,13 @@ function showImageGallery(product) {
         referenceImages = [product.image || 'https://picsum.photos/150/150?random=100'];
     }
 
-    const getImgSrc = (img) => img.startsWith('http') ? img : (img.startsWith('images') ? img : '../' + img);
+    const getImgSrc = (img) => {
+        if (!img) return '';
+        if (img.includes('/uploads/')) {
+            return `${BACKEND_URL}${img.substring(img.indexOf('/uploads/'))}`;
+        }
+        return img.startsWith('http') ? img : (img.startsWith('images') ? img : '../' + img);
+    };
 
     // Create gallery with main image + 3 reference thumbnails
     modalImageContainer.innerHTML = `

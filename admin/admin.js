@@ -288,8 +288,13 @@ function renderNormalProductsTable(data) {
     data.forEach(item => {
         let imgHtml = `<div style="width:40px;height:40px;background:#eee;border-radius:4px;"></div>`;
         if (item.images && item.images.length > 0) {
-            const firstImg = item.images[0];
-            imgHtml = `<img src="${firstImg.startsWith('images') ? '../' + firstImg : firstImg}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">`;
+            let firstImg = item.images[0];
+            if (firstImg && firstImg.includes('/uploads/')) {
+                firstImg = `${BACKEND_URL}${firstImg.substring(firstImg.indexOf('/uploads/'))}`;
+            } else if (!firstImg.startsWith('http')) {
+                firstImg = firstImg.startsWith('images') ? '../' + firstImg : firstImg;
+            }
+            imgHtml = `<img src="${firstImg}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">`;
         }
         tbody.innerHTML += `
             <tr>
@@ -313,8 +318,13 @@ function renderCustomizedProductsTable(data) {
     data.forEach(item => {
         let imgHtml = `<div style="width:40px;height:40px;background:#eee;border-radius:4px;"></div>`;
         if (item.images && item.images.length > 0) {
-            const firstImg = item.images[0];
-            imgHtml = `<img src="${firstImg.startsWith('http') ? firstImg : '../' + firstImg}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">`;
+            let firstImg = item.images[0];
+            if (firstImg && firstImg.includes('/uploads/')) {
+                firstImg = `${BACKEND_URL}${firstImg.substring(firstImg.indexOf('/uploads/'))}`;
+            } else if (!firstImg.startsWith('http')) {
+                firstImg = firstImg.startsWith('images') ? '../' + firstImg : firstImg;
+            }
+            imgHtml = `<img src="${firstImg}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">`;
         }
         let pricePreview = "Dynamic";
         if (item.customization_options && item.customization_options.sizes) {
@@ -628,16 +638,22 @@ function openCrudModal(table, existingDataOrId = null) {
             let slotsHtml = '';
             const labels = ['Main Image', 'Sub Image 1', 'Sub Image 2'];
             for (let i = 0; i < 3; i++) {
-                const imgUrl = parsedVal[i] || '';
+                const rawImgUrl = parsedVal[i] || '';
+                let imgSrc = rawImgUrl;
+                if (imgSrc && imgSrc.includes('/uploads/')) {
+                    imgSrc = `${BACKEND_URL}${imgSrc.substring(imgSrc.indexOf('/uploads/'))}`;
+                } else if (!imgSrc.startsWith('http') && imgSrc.trim() !== '') {
+                    imgSrc = imgSrc.startsWith('images') ? '../' + imgSrc : imgSrc;
+                }
                 slotsHtml += `
                     <div style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; background: #fafafa;">
                         <label style="font-size: 12px; font-weight: bold; color: var(--text-primary);">${labels[i]}</label>
                         <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-                            ${imgUrl ? `<img src="${imgUrl}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">` : `<div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">Empty</div>`}
+                            ${imgSrc ? `<img src="${imgSrc}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">` : `<div style="width: 40px; height: 40px; background: #eee; border-radius: 4px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">Empty</div>`}
                             <div style="flex: 1;">
                                 <input type="file" id="crud_image_${i}" class="form-control" style="width:100%;padding:4px;cursor:pointer;" accept="image/*">
                             </div>
-                            <input type="hidden" id="crud_existing_image_${i}" value='${imgUrl.replace(/'/g, "&#39;").replace(/"/g, "&quot;") || ''}'>
+                            <input type="hidden" id="crud_existing_image_${i}" value='${rawImgUrl.replace(/'/g, "&#39;").replace(/"/g, "&quot;") || ''}'>
                         </div>
                     </div>
                 `;

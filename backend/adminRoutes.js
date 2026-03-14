@@ -75,12 +75,9 @@ router.post("/upload", upload.array('images', 10), (req, res) => {
             return res.status(400).json({ success: false, error: "No files uploaded." });
         }
 
-        // Generate absolute server URLs for the saved files
+        // Generate relative server URLs for the saved files to allow frontend to dictate BACKEND_URL
         const fileUrls = req.files.map(f => {
-            // Determine backend URL dynamically to support local development port matching
-            const protocol = req.protocol;
-            const host = req.get('host'); // e.g. localhost:8001
-            return `${protocol}://${host}/uploads/${f.filename}`;
+            return `/uploads/${f.filename}`;
         });
 
         res.json({ success: true, urls: fileUrls });

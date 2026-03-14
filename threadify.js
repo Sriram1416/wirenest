@@ -413,7 +413,9 @@ function renderProducts() {
                 <div class="products-row">
                     ${displayProducts.map(product => {
                         let imgUrl = product.image;
-                        if (!imgUrl.startsWith('http')) {
+                        if (imgUrl.includes('/uploads/')) {
+                            imgUrl = `${BACKEND_URL}${imgUrl.substring(imgUrl.indexOf('/uploads/'))}`;
+                        } else if (!imgUrl.startsWith('http')) {
                             imgUrl = imgUrl.startsWith('images') ? imgUrl : `${BACKEND_URL}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
                         }
                         return `
@@ -1796,16 +1798,24 @@ function showImageGallery(product) {
     // Force exactly 3 images max constraint
     referenceImages = referenceImages.slice(0, 3);
 
+    const getImgSrc = (img) => {
+        if (!img) return '';
+        if (img.includes('/uploads/')) {
+            return `${BACKEND_URL}${img.substring(img.indexOf('/uploads/'))}`;
+        }
+        return img.startsWith('http') ? img : (img.startsWith('images') ? img : '../' + img);
+    };
+
     // Create gallery with main image + 3 reference thumbnails
     modalImageContainer.innerHTML = `
         <div class="product-gallery">
             <div class="main-image-container">
-                <img id="mainGalleryImage" src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;">
+                <img id="mainGalleryImage" src="${getImgSrc(product.image)}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;">
             </div>
             <div class="gallery-thumbnails">
                 ${referenceImages.map((img, index) => `
-                    <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="focusImage('${img}', ${index})">
-                        <img src="${img}" alt="Reference image ${index + 1}" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="focusImage('${getImgSrc(img)}', ${index})">
+                        <img src="${getImgSrc(img)}" alt="Reference image ${index + 1}" style="width: 100%; height: 100%; object-fit: contain;">
                     </div>
                 `).join('')}
             </div>
