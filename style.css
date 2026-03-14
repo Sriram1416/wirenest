@@ -2318,6 +2318,7 @@ h4 {
     top: 0;
     width: 80%;
     height: 100vh;
+    height: 100dvh;
     background: var(--bg-secondary);
     box-shadow: -8px 0 32px rgba(10, 25, 49, 0.12);
     z-index: 2000;
@@ -2385,8 +2386,8 @@ h4 {
     scroll-behavior: smooth;
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
-    min-height: 200px;
-    max-height: calc(100vh - 250px);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
 }
 
 /* Webkit scrollbar styling */
@@ -2415,19 +2416,20 @@ h4 {
 .cart-item {
     display: flex;
     gap: 16px;
-    margin-bottom: 24px;
-    padding-bottom: 24px;
+    margin-bottom: 12px;
+    padding: 16px;
+    border: 1px solid transparent;
     border-bottom: 1px solid var(--border-light);
-    transition: all var(--transition-base);
+    border-radius: var(--radius-md);
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
     position: relative;
     align-items: flex-start;
 }
 
 .cart-item:hover {
-    background: var(--bg-secondary);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    margin: 0 -16px 24px -16px;
+    background: var(--bg-primary);
+    border-color: var(--border-light);
+    transform: translateY(-2px);
 }
 
 .cart-item-image {
