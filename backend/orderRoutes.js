@@ -1,7 +1,6 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
@@ -20,22 +19,23 @@ const supabaseAdmin = createClient(
     { auth: { persistSession: false } }
 );
 
-// Setup Multer for Payment Receipts
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const dir = path.join(__dirname, 'public/uploads/receipts');
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
-    },
-    filename: function (req, file, cb) {
-        // e.g. receipt-1632342342-abc.png
-        cb(null, 'receipt-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
-    }
-});
+// Memory storage — receipts go to Supabase Storage (persistent CDN), not Render disk
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
-const upload = multer({ storage: storage });
+// Upload receipt buffer to Supabase Storage
+async function uploadReceiptToSupabase(file) {
+    const ext = path.extname(file.originalname) || '.jpg';
+    const fileName = `receipts/receipt-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+
+    const { error } = await supabaseAdmin.storage
+        .from('product-images')
+        .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
+
+    if (error) throw new Error('Receipt upload failed: ' + error.message);
+
+    const { data } = supabaseAdmin.storage.from('product-images').getPublicUrl(fileName);
+    return data.publicUrl;
+}
 
 // POST /orders/checkout
 // Receives: receipt (File), user_id (String/UUID), shipping_address (JSON String), items (JSON String), total_amount (Number)
@@ -47,8 +47,14 @@ router.post("/checkout", upload.single('receipt'), async (req, res) => {
             return res.status(400).json({ error: "Missing payment screenshot" });
         }
 
-        // The URL path accessible from the frontend public folder
-        const receiptUrl = `/uploads/receipts/${req.file.filename}`;
+        // Upload receipt to Supabase Storage (permanent CDN)
+        let receiptUrl;
+        try {
+            receiptUrl = await uploadReceiptToSupabase(req.file);
+        } catch (uploadErr) {
+            console.error('Receipt upload error:', uploadErr.message);
+            return res.status(500).json({ error: 'Failed to store payment receipt: ' + uploadErr.message });
+        }
 
         const { user_id, shipping_address, items, total_amount } = req.body;
 
