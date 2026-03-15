@@ -97,7 +97,9 @@ router.post("/login", async (req, res) => {
 
 /* GOOGLE OAUTH */
 router.get("/google", async (req, res) => {
-  const redirectUrl = req.query.redirectUrl || 'http://localhost:3000/index.html';
+  // Determine frontend URL dynamically. Fallback to common production URL if headers missing.
+  const frontendOrigin = req.headers.origin || req.headers.referer || "https://wirenest.vercel.app";
+  const redirectUrl = req.query.redirectUrl || `${frontendOrigin}/index.html`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

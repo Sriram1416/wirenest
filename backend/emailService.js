@@ -116,7 +116,7 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
 
                 <br/>
                 <p style="margin-top: 30px; padding: 15px; background: #e0e7ff; border-radius: 8px; text-align: center;">
-                    Please log into the <a href="http://localhost:3000/admin/admin.html" style="color: #2563eb; text-decoration: none; font-weight: bold; padding: 5px 10px; border: 1px solid #2563eb; border-radius: 4px; display: inline-block; background: #fff;">Admin Dashboard</a> to review the screenshot and <strong>Approve</strong> or <strong>Reject</strong> the payment.
+                    Please log into the <a href="${process.env.FRONTEND_URL || 'https://wirenest.vercel.app'}/admin/admin.html" style="color: #2563eb; text-decoration: none; font-weight: bold; padding: 5px 10px; border: 1px solid #2563eb; border-radius: 4px; display: inline-block; background: #fff;">Admin Dashboard</a> to review the screenshot and <strong>Approve</strong> or <strong>Reject</strong> the payment.
                 </p>
             </div>
         `
