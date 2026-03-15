@@ -37,6 +37,31 @@ app.get("/ping", (_req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
+// Diagnostic: test email configuration on live server
+app.get("/test-email", async (_req, res) => {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_PASS;
+  if (!gmailUser || !gmailPass) {
+    return res.json({
+      ok: false,
+      error: "GMAIL_USER or GMAIL_PASS env vars are NOT set on this Render instance.",
+      hint: "Go to Render Dashboard → Your Service → Environment → Add GMAIL_USER and GMAIL_PASS"
+    });
+  }
+  try {
+    const nodemailer = await import('nodemailer');
+    const transporter = nodemailer.default.createTransport({
+      service: 'gmail',
+      auth: { user: gmailUser, pass: gmailPass },
+      tls: { rejectUnauthorized: false }
+    });
+    await transporter.verify();
+    res.json({ ok: true, message: `Gmail SMTP verified OK for ${gmailUser}` });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, hint: "Check App Password is correct and 2FA is enabled on Gmail." });
+  }
+});
+
 const PORT = process.env.PORT || 8001;
 
 app.listen(PORT, () => {

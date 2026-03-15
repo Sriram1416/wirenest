@@ -139,12 +139,12 @@ router.post("/checkout", upload.single('receipt'), async (req, res) => {
 
         res.status(200).json({ success: true, order_id: newOrderId, message: "Order submitted successfully" });
 
-        // Trigger Email to Admin asynchronously
+        // Trigger Email to Admin (awaited so errors appear in Render logs)
         try {
             const customerEmail = parsedAddress.email || 'Unknown';
-            sendAdminNewOrderEmail(newOrderId, total_amount, customerEmail, receiptUrl, parsedItems, parsedAddress);
+            await sendAdminNewOrderEmail(newOrderId, total_amount, customerEmail, receiptUrl, parsedItems, parsedAddress);
         } catch (e) {
-            console.error("Async Email Error:", e);
+            console.error("Admin Email Send Error:", e.message);
         }
 
     } catch (err) {

@@ -9,24 +9,34 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const ADMIN_EMAIL = process.env.GMAIL_USER || 'wirenestteam@gmail.com';
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: ADMIN_EMAIL,
-        pass: process.env.GMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
+// Create transporter lazily so env vars are always read at send-time (important for Render)
+function createTransporter() {
+    const pass = process.env.GMAIL_PASS;
+    const user = process.env.GMAIL_USER || 'wirenestteam@gmail.com';
+    if (!pass) {
+        console.error('❌ EMAIL CONFIG ERROR: GMAIL_PASS env var is not set on this server!');
+        return null;
     }
-});
+    return nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false }
+    });
+}
 
 /**
  * Sends a notification to the Store Admin when a new order is placed
  */
 export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail, receiptUrl, orderItems = [], customerAddress = null) {
-    if (!process.env.GMAIL_PASS) return;
+    const transporter = createTransporter();
+    if (!transporter) {
+        console.error(`❌ Skipping admin email for order ${orderId} — GMAIL_PASS not configured on server.`);
+        return;
+    }
 
-    const serverUrl = process.env.BACKEND_URL || 'http://localhost:8001';
+    console.log(`📧 Preparing admin notification email for order ${orderId} to ${ADMIN_EMAIL}...`);
+
+    const serverUrl = process.env.BACKEND_URL || 'https://wirenest-backend.onrender.com';
     const absoluteReceiptUrl = (receiptUrl && !receiptUrl.startsWith('http')) ? `${serverUrl}${receiptUrl}` : receiptUrl;
 
     let itemsHtml = `
@@ -90,7 +100,7 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
 
     const mailOptions = {
         from: `WireNest System <${ADMIN_EMAIL}>`,
-        to: ADMIN_EMAIL, // Send to the admin
+        to: ADMIN_EMAIL,
         subject: `🚨 New Order Pending Approval: #${orderId.substring(0, 8)}`,
         html: `
             <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background: #fff;">
@@ -110,7 +120,6 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
                 </div>
                 ` : `<p style="margin: 5px 0;"><strong>Customer Email:</strong> ${customerEmail}</p>`}
 
-                
                 ${itemsHtml}
                 ${receiptHtml}
 
@@ -123,10 +132,11 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
     };
 
     try {
-        await transporter.sendMail(mailOptions);
-        console.log(`📧 Admin notification email sent for order ${orderId}`);
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`✅ Admin notification email sent for order ${orderId}. MessageId: ${info.messageId}`);
     } catch (err) {
-        console.error("Failed to send admin email:", err);
+        console.error(`❌ Failed to send admin email for order ${orderId}:`, err.message);
+        console.error('   Gmail error code:', err.code, '| Response:', err.response);
     }
 }
 
@@ -134,7 +144,8 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
  * Sends a receipt exactly to the customer when the admin clicks [Approve]
  */
 export async function sendCustomerApprovalEmail(customerEmail, orderId, totalAmount) {
-    if (!process.env.GMAIL_PASS || !customerEmail) return;
+    const transporter = createTransporter();
+    if (!transporter || !customerEmail) return;
 
     const mailOptions = {
         from: `WireNest Support <${ADMIN_EMAIL}>`,
@@ -163,7 +174,8 @@ export async function sendCustomerApprovalEmail(customerEmail, orderId, totalAmo
  * Sends a notification to the customer when the admin clicks [Mark Shipped]
  */
 export async function sendCustomerShippedEmail(customerEmail, orderId) {
-    if (!process.env.GMAIL_PASS || !customerEmail) return;
+    const transporter = createTransporter();
+    if (!transporter || !customerEmail) return;
 
     const mailOptions = {
         from: `WireNest Support <${ADMIN_EMAIL}>`,
@@ -193,7 +205,8 @@ export async function sendCustomerShippedEmail(customerEmail, orderId) {
  * Sends a notification to the customer when the admin clicks [Mark Delivered]
  */
 export async function sendCustomerDeliveredEmail(customerEmail, orderId) {
-    if (!process.env.GMAIL_PASS || !customerEmail) return;
+    const transporter = createTransporter();
+    if (!transporter || !customerEmail) return;
 
     const mailOptions = {
         from: `WireNest Support <${ADMIN_EMAIL}>`,
