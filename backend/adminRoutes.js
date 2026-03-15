@@ -6,17 +6,8 @@ import path from "path";
 
 const router = express.Router();
 
-// Configure Multer for local Admin Image Uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/uploads/')
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, uniqueSuffix + path.extname(file.originalname))
-    }
-});
-const upload = multer({ storage: storage });
+// Memory storage — images go directly to Supabase Storage CDN, not Render's ephemeral disk
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Elevate privileges to bypass Row Level Security for fetching admin data
 const supabaseAdmin = createClient(
@@ -24,24 +15,18 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_ANON_KEY
 );
 
+const STORAGE_BUCKET = 'product-images';
+
 /* ADMIN LOGIN (Supabase Role-Based) */
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
-    // 1. Authenticate with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-    });
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError || !authData.user) {
-        return res.status(401).json({
-            success: false,
-            error: authError?.message || "Invalid credentials"
-        });
+        return res.status(401).json({ success: false, error: authError?.message || "Invalid credentials" });
     }
 
-    // 2. Authorize the user: Check the 'role' column in the custom 'users' table
     const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role, full_name, email')
@@ -49,38 +34,48 @@ router.post("/login", async (req, res) => {
         .single();
 
     if (userError || !userData || userData.role !== 'admin') {
-        // Sign out if they aren't actually an admin
         await supabase.auth.signOut();
-        return res.status(403).json({
-            success: false,
-            error: "Access Denied: You do not have administrator privileges."
-        });
+        return res.status(403).json({ success: false, error: "Access Denied: You do not have administrator privileges." });
     }
 
-    // Success
-    return res.json({
-        success: true,
-        admin: {
-            email: userData.email,
-            name: userData.full_name || "Admin",
-            role: userData.role
-        }
-    });
+    return res.json({ success: true, admin: { email: userData.email, name: userData.full_name || "Admin", role: userData.role } });
 });
 
-/* IMAGE UPLOAD ENDPOINT */
-router.post("/upload", upload.array('images', 10), (req, res) => {
+/* IMAGE UPLOAD ENDPOINT — uploads to Supabase Storage for permanent CDN hosting */
+router.post("/upload", upload.array('images', 10), async (req, res) => {
     try {
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ success: false, error: "No files uploaded." });
         }
 
-        // Generate relative server URLs for the saved files to allow frontend to dictate BACKEND_URL
-        const fileUrls = req.files.map(f => {
-            return `/uploads/${f.filename}`;
-        });
+        const uploadedUrls = [];
 
-        res.json({ success: true, urls: fileUrls });
+        for (const file of req.files) {
+            const ext = path.extname(file.originalname) || '.jpg';
+            const fileName = `products/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+
+            // Upload buffer directly to Supabase Storage
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from(STORAGE_BUCKET)
+                .upload(fileName, file.buffer, {
+                    contentType: file.mimetype,
+                    upsert: false
+                });
+
+            if (uploadError) {
+                console.error('Supabase Storage upload error:', uploadError.message);
+                return res.status(500).json({ success: false, error: 'Storage upload failed: ' + uploadError.message });
+            }
+
+            // Get permanent public CDN URL
+            const { data: publicUrlData } = supabaseAdmin.storage
+                .from(STORAGE_BUCKET)
+                .getPublicUrl(fileName);
+
+            uploadedUrls.push(publicUrlData.publicUrl);
+        }
+
+        res.json({ success: true, urls: uploadedUrls });
     } catch (err) {
         console.error("Upload Error:", err);
         res.status(500).json({ success: false, error: err.message });

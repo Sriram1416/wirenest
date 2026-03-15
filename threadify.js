@@ -444,12 +444,18 @@ function renderProducts() {
             <div class="product-section">
                 <div class="products-row">
                     ${displayProducts.map(product => {
-                        let imgUrl = product.image;
-                        if (imgUrl.includes('/uploads/')) {
+                        let imgUrl = product.image || '';
+                        // Normalize image URL: replace any localhost refs with live backend URL
+                        if (imgUrl.includes('localhost:8001') || imgUrl.includes('localhost:3000')) {
+                            imgUrl = imgUrl.replace(/https?:\/\/localhost:\d+/, BACKEND_URL);
+                        } else if (imgUrl.includes('/uploads/') && !imgUrl.startsWith('http')) {
                             imgUrl = `${BACKEND_URL}${imgUrl.substring(imgUrl.indexOf('/uploads/'))}`;
-                        } else if (!imgUrl.startsWith('http')) {
-                            imgUrl = imgUrl.startsWith('images') ? imgUrl : `${BACKEND_URL}${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+                        } else if (imgUrl.includes('/uploads/') && imgUrl.startsWith('http')) {
+                            // already absolute — use as-is (handles Render or Supabase CDN URLs)
+                        } else if (!imgUrl.startsWith('http') && imgUrl !== '') {
+                            imgUrl = imgUrl.startsWith('images') ? imgUrl : `images/${imgUrl}`;
                         }
+                        if (!imgUrl) imgUrl = 'https://picsum.photos/300/300?random=' + product.id;
                         return `
                         <div class="product-card" onclick="showProductModal('${product.id}')">
                             <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist('${product.id}', '${product.blockType || 'normal'}', this)" aria-label="Add to Wishlist">
