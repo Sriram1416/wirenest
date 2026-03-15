@@ -32,8 +32,24 @@ app.get("/", (_req, res) => {
   res.json({ status: "WireNest Backend is Live!" });
 });
 
+// Keep-alive ping endpoint (called by frontend & self-pinger)
+app.get("/ping", (_req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});
+
 const PORT = process.env.PORT || 8001;
 
 app.listen(PORT, () => {
   console.log(`✅ Backend server running on http://localhost:${PORT}`);
+
+  // Self-ping every 14 minutes to prevent Render free-tier spin-down (15 min timeout)
+  const SELF_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${SELF_URL}/ping`);
+      console.log(`🏓 Keep-alive ping: ${res.status}`);
+    } catch (e) {
+      console.warn('Keep-alive ping failed:', e.message);
+    }
+  }, 14 * 60 * 1000); // every 14 minutes
 });

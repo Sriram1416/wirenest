@@ -1,6 +1,14 @@
 // WireNest - Handcrafted Wire Baskets E-commerce JavaScript
 // Pure vanilla JavaScript - No frameworks
 
+// 🚀 RENDER WAKE-UP PING — fires instantly before DOM is ready to minimize cold-start delay
+(function wakeUpBackend() {
+    const host = window.location.hostname;
+    const isProd = host.includes('vercel.app') || (host !== 'localhost' && host !== '127.0.0.1' && !host.includes('192.168.'));
+    const backendHost = isProd ? 'https://wirenest-backend.onrender.com' : 'http://localhost:8001';
+    fetch(backendHost + '/', { method: 'GET', cache: 'no-store' }).catch(() => {});
+})();
+
 // Global Supabase client
 var supabaseClient;
 
@@ -339,24 +347,48 @@ document.addEventListener('DOMContentLoaded', function () {
     productsGrid = document.getElementById('productsGrid');
     loginSignupOverlay = document.getElementById('loginSignupOverlay');
 
-    setTimeout(() => {
-        // Handle potential OAuth Redirect before fully initializing UI
-        handleOAuthRedirect().then(async () => {
-            // Fetch live database products
-            await fetchProductsFromDatabase();
+    // Show skeleton cards immediately so the page feels instant
+    const grid = document.getElementById('productsGrid');
+    if (grid) {
+        const skeletonCount = 8;
+        let skeletonHtml = '<div class="main-products-section"><div class="product-section"><div class="products-row">';
+        for (let i = 0; i < skeletonCount; i++) {
+            skeletonHtml += `<div class="product-card" style="pointer-events:none;">
+                <div style="width:100%;aspect-ratio:1;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:skeleton-shimmer 1.5s infinite;"></div>
+                <div class="product-info" style="padding:12px;">
+                    <div style="height:16px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:skeleton-shimmer 1.5s infinite;border-radius:4px;margin-bottom:8px;"></div>
+                    <div style="height:14px;width:60%;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:skeleton-shimmer 1.5s infinite;border-radius:4px;"></div>
+                </div>
+            </div>`;
+        }
+        skeletonHtml += '</div></div></div>';
+        grid.innerHTML = skeletonHtml;
 
-            // Initialize app
-            loadCartFromStorage();
-            renderProducts();
-            
-            if (currentUser && currentUser.id !== 'local-user-restore') {
-                fetchUserWishlistState();
-            }
-            
-            updateCartCount();
-            setupEventListeners();
-        });
-    }, 500);
+        // Inject skeleton keyframe if not present
+        if (!document.getElementById('skeleton-style')) {
+            const s = document.createElement('style');
+            s.id = 'skeleton-style';
+            s.textContent = '@keyframes skeleton-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}';
+            document.head.appendChild(s);
+        }
+    }
+
+    // No artificial delay — start fetching immediately
+    handleOAuthRedirect().then(async () => {
+        // Fetch live database products
+        await fetchProductsFromDatabase();
+
+        // Initialize app
+        loadCartFromStorage();
+        renderProducts();
+
+        if (currentUser && currentUser.id !== 'local-user-restore') {
+            fetchUserWishlistState();
+        }
+
+        updateCartCount();
+        setupEventListeners();
+    });
 
     // Restore session using Supabase as single source of truth
     // Check localStorage first for immediate UI update
