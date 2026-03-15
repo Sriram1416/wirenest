@@ -721,29 +721,42 @@ async function handleCrudSubmit(e) {
     if (imagesToUpload.length > 0) {
         showLoader(true);
         try {
-            const formData = new FormData();
-            imagesToUpload.forEach(item => {
-                formData.append('images', item.file);
-            });
+            // Upload each file directly to Supabase Storage via signed URL (bypasses Render entirely)
+            for (const item of imagesToUpload) {
+                const file = item.file;
 
-            const uploadRes = await fetch(`${BACKEND_URL}/admin/upload`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const uploadData = await uploadRes.json();
-            if (uploadData.success && uploadData.urls) {
-                // Map the returned URLs back to their correct slot index
-                imagesToUpload.forEach((item, rawIndex) => {
-                    finalImagesArray[item.index] = uploadData.urls[rawIndex];
+                // Step 1: Ask backend to generate a signed upload URL for this filename
+                const urlRes = await fetch(`${BACKEND_URL}/admin/upload-url`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, contentType: file.type })
                 });
-            } else {
-                throw new Error("Image upload failed: " + uploadData.error);
+
+                if (!urlRes.ok) {
+                    const errData = await urlRes.json().catch(() => ({}));
+                    throw new Error('Could not get signed upload URL: ' + (errData.error || urlRes.status));
+                }
+
+                const { signedUrl, publicUrl } = await urlRes.json();
+
+                // Step 2: PUT the file directly to Supabase CDN (no Render involvement)
+                const putRes = await fetch(signedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type, 'x-upsert': 'false' },
+                    body: file
+                });
+
+                if (!putRes.ok) {
+                    throw new Error(`Supabase storage upload failed (${putRes.status})`);
+                }
+
+                // Step 3: Store the permanent public CDN URL
+                finalImagesArray[item.index] = publicUrl;
             }
         } catch (err) {
-            showNotification(err.message);
+            showNotification('Image upload failed: ' + err.message);
             showLoader(false);
-            return; // Abort the whole sequence if images fail
+            return;
         }
     }
 

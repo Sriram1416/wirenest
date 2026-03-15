@@ -41,7 +41,44 @@ router.post("/login", async (req, res) => {
     return res.json({ success: true, admin: { email: userData.email, name: userData.full_name || "Admin", role: userData.role } });
 });
 
-/* IMAGE UPLOAD ENDPOINT — uploads to Supabase Storage for permanent CDN hosting */
+/* GENERATE SIGNED UPLOAD URL — Admin browser uploads directly to Supabase Storage CDN */
+router.post("/upload-url", async (req, res) => {
+    try {
+        const { filename, contentType } = req.body;
+        if (!filename) return res.status(400).json({ success: false, error: 'filename required' });
+
+        const ext = path.extname(filename) || '.jpg';
+        const filePath = `products/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+
+        // Create a signed URL that allows the browser to upload directly to Supabase
+        const { data, error } = await supabaseAdmin.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUploadUrl(filePath);
+
+        if (error) {
+            console.error('Signed URL error:', error.message);
+            return res.status(500).json({ success: false, error: error.message });
+        }
+
+        // Get the eventual permanent public URL for this file
+        const { data: pubData } = supabaseAdmin.storage
+            .from(STORAGE_BUCKET)
+            .getPublicUrl(filePath);
+
+        res.json({
+            success: true,
+            signedUrl: data.signedUrl,
+            token: data.token,
+            path: filePath,
+            publicUrl: pubData.publicUrl
+        });
+    } catch (err) {
+        console.error('Upload URL Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/* LEGACY UPLOAD ENDPOINT — kept for compatibility, now also supports direct CDN urls */
 router.post("/upload", upload.array('images', 10), async (req, res) => {
     try {
         if (!req.files || req.files.length === 0) {
@@ -49,25 +86,19 @@ router.post("/upload", upload.array('images', 10), async (req, res) => {
         }
 
         const uploadedUrls = [];
-
         for (const file of req.files) {
             const ext = path.extname(file.originalname) || '.jpg';
             const fileName = `products/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
 
-            // Upload buffer directly to Supabase Storage
             const { error: uploadError } = await supabaseAdmin.storage
                 .from(STORAGE_BUCKET)
-                .upload(fileName, file.buffer, {
-                    contentType: file.mimetype,
-                    upsert: false
-                });
+                .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
 
             if (uploadError) {
-                console.error('Supabase Storage upload error:', uploadError.message);
+                console.error('Storage upload error:', uploadError.message);
                 return res.status(500).json({ success: false, error: 'Storage upload failed: ' + uploadError.message });
             }
 
-            // Get permanent public CDN URL
             const { data: publicUrlData } = supabaseAdmin.storage
                 .from(STORAGE_BUCKET)
                 .getPublicUrl(fileName);
