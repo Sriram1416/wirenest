@@ -721,68 +721,40 @@ async function handleCrudSubmit(e) {
     if (imagesToUpload.length > 0) {
         showLoader(true);
         try {
-            // Try signed-URL approach first (direct browser→Supabase, bypasses Render)
-            // Falls back to legacy FormData /upload if Render hasn't deployed the new endpoint yet
-            let useFormDataFallback = false;
+            // Direct upload to Supabase Storage from the browser — no backend needed
+            const SUPABASE_URL = 'https://qcyrfudyumcfdbcorcrc.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjeXJmdWR5dW1jZmRiY29yY3JjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxODY1MTksImV4cCI6MjA4NTc2MjUxOX0.8vVy-pHB2dN_gZIXFqGSYjx9bAx6jAcDxKpPjCjADXs';
+            const BUCKET = 'product-images';
 
-            // Quick probe: check if /admin/upload-url is available on this Render build
-            try {
-                const probe = await fetch(`${BACKEND_URL}/admin/upload-url`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename: 'probe.jpg', contentType: 'image/jpeg' })
-                });
-                if (probe.status === 404) useFormDataFallback = true;
-            } catch (e) {
-                useFormDataFallback = true;
-            }
+            // Initialise the Supabase client (window.supabase is loaded from CDN in admin.html)
+            const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            if (useFormDataFallback) {
-                // --- FALLBACK: Send files through Render backend ---
-                console.log('Using legacy FormData upload (Render build pending new endpoint)...');
-                const formData = new FormData();
-                imagesToUpload.forEach(item => formData.append('images', item.file));
+            for (const item of imagesToUpload) {
+                const file = item.file;
+                const ext = file.name.split('.').pop() || 'jpg';
+                const filePath = `products/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
 
-                const uploadRes = await fetch(`${BACKEND_URL}/admin/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const uploadData = await uploadRes.json();
-                if (!uploadData.success || !uploadData.urls) {
-                    throw new Error('Image upload failed: ' + (uploadData.error || 'Unknown error'));
+                // Upload directly from the browser to Supabase Storage
+                const { error: uploadError } = await sbClient.storage
+                    .from(BUCKET)
+                    .upload(filePath, file, { contentType: file.type, upsert: false });
+
+                if (uploadError) {
+                    // If policy error, give a clear instruction
+                    if (uploadError.message.includes('policy') || uploadError.message.includes('not authorized')) {
+                        throw new Error('Storage permission denied. Please run the SQL policy setup in Supabase dashboard.');
+                    }
+                    throw new Error('Upload failed: ' + uploadError.message);
                 }
-                imagesToUpload.forEach((item, rawIndex) => {
-                    finalImagesArray[item.index] = uploadData.urls[rawIndex];
-                });
-            } else {
-                // --- PRIMARY: Upload each file directly to Supabase CDN via signed URL ---
-                for (const item of imagesToUpload) {
-                    const file = item.file;
 
-                    // Step 1: Get signed upload URL from backend (tiny JSON call, no file bytes)
-                    const urlRes = await fetch(`${BACKEND_URL}/admin/upload-url`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filename: file.name, contentType: file.type })
-                    });
-
-                    if (!urlRes.ok) throw new Error('Could not get upload URL (' + urlRes.status + ')');
-                    const { signedUrl, publicUrl } = await urlRes.json();
-
-                    // Step 2: PUT file directly to Supabase CDN (Render not involved)
-                    const putRes = await fetch(signedUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': file.type },
-                        body: file
-                    });
-                    if (!putRes.ok) throw new Error('Supabase upload failed (' + putRes.status + ')');
-
-                    // Step 3: Store permanent public URL
-                    finalImagesArray[item.index] = publicUrl;
-                }
+                // Get permanent public CDN URL
+                const { data: urlData } = sbClient.storage.from(BUCKET).getPublicUrl(filePath);
+                finalImagesArray[item.index] = urlData.publicUrl;
+                console.log('✅ Uploaded to Supabase:', urlData.publicUrl);
             }
         } catch (err) {
             showNotification('Image upload failed: ' + err.message);
+            console.error('Upload error:', err);
             showLoader(false);
             return;
         }
