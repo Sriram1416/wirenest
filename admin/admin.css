@@ -590,3 +590,101 @@
 .admin-crud-overlay.active .admin-crud-modal {
     transform: scale(1);
 }
+
+/* =========================================================================
+   MOBILE RESPONSIVENESS
+   ========================================================================= */
+@media (max-width: 768px) {
+    .admin-layout {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 80px);
+    }
+
+    /* Convert Sidebar to horizontal scrolling menu */
+    .admin-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-shrink: 0;
+        /* Hides scrollbar in some browsers for cleaner look */
+        scrollbar-width: none; 
+    }
+    
+    .admin-sidebar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        padding: 15px 15px;
+        gap: 10px;
+        min-width: max-content;
+    }
+
+    .sidebar-link {
+        padding: 10px 16px;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .sidebar-link.active {
+        border-left: none;
+        border-bottom-color: var(--primary-color);
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .sidebar-link.active:hover {
+        color: white;
+    }
+
+    .admin-main {
+        padding: 15px;
+        overflow-x: hidden;
+    }
+
+    .admin-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .admin-header-row button {
+        width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+
+    .table-container {
+        /* Force tables to be scrollable completely independently of page */
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 12px 10px;
+        font-size: 13px;
+        white-space: nowrap; 
+    }
+
+    .admin-crud-modal {
+        width: 95% !important;
+        padding: 20px !important;
+        max-height: 90vh !important;
+    }
+}
