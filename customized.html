@@ -179,7 +179,9 @@
     <div id="productModal" class="product-modal">
         <div class="modal-overlay" onclick="closeProductModal()"></div>
         <div class="modal-content">
-            <button class="modal-close" onclick="closeProductModal()">×</button>
+            <div class="modal-close-wrapper">
+                <button class="modal-close" onclick="closeProductModal()">×</button>
+            </div>
             <div class="product-details">
                 <div class="product-details-image">
                     <div id="modalProductImageContainer">
@@ -225,8 +227,9 @@
                                 </div>
                             </div>
 
-                            <div class="modal-actions">
-                                <button class="btn-primary btn-large" onclick="addNormalToCart()">Add to Cart</button>
+                            <div class="modal-actions" style="display: flex; gap: 12px; margin-top: 25px;">
+                                <button class="btn-primary btn-large" style="flex: 2;" onclick="addNormalToCart()">Add to Cart</button>
+                                <button class="btn-secondary" style="flex: 1;" onclick="closeProductModal()">Continue Shopping</button>
                             </div>
                         </div>
 
@@ -545,7 +548,9 @@
     <div id="sizeGuideModal" class="product-modal" style="z-index: 3000;">
         <div class="modal-overlay" onclick="closeSizeGuide()"></div>
         <div class="modal-content" style="max-width: 600px;">
-            <button class="modal-close" onclick="closeSizeGuide()">×</button>
+            <div class="modal-close-wrapper">
+                <button class="modal-close" onclick="closeSizeGuide()">×</button>
+            </div>
             <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary-color);">Basket Size Guide 📏</h2>
             <p style="text-align: center; margin-bottom: 30px; color: var(--text-secondary);">Here is a quick reference to help you visualize our 3D Dimensions in your home.</p>
             

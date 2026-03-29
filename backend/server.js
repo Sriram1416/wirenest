@@ -51,7 +51,9 @@ app.get("/test-email", async (_req, res) => {
   try {
     const nodemailer = await import('nodemailer');
     const transporter = nodemailer.default.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: { user: gmailUser, pass: gmailPass },
       tls: { rejectUnauthorized: false }
     });

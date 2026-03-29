@@ -281,10 +281,31 @@ async function fetchProductsFromDatabase() {
 
         let liveProducts = [];
 
+        // Helper to parse the 'images' field which can be JSON, array, or string
+        const parseImages = (imgField) => {
+            if (!imgField) return [];
+            if (Array.isArray(imgField)) return imgField;
+            if (typeof imgField === 'string') {
+                const trimmed = imgField.trim();
+                if (!trimmed) return [];
+                if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        return Array.isArray(parsed) ? parsed : [parsed];
+                    } catch (e) {
+                        return [trimmed];
+                    }
+                }
+                // Case for comma separated or single URL
+                if (trimmed.includes(',')) return trimmed.split(',').map(s => s.trim());
+                return [trimmed];
+            }
+            return [];
+        };
+
         if (normalData.success && normalData.data) {
             const parsedNormal = normalData.data.map(p => {
-                let parsedImages = [];
-                if (typeof p.images === 'string') { try { parsedImages = JSON.parse(p.images); } catch (e) { } } else if (Array.isArray(p.images)) parsedImages = p.images;
+                const parsedImages = parseImages(p.images);
                 let parsedColors = [];
                 if (typeof p.colors === 'string') { try { parsedColors = JSON.parse(p.colors); } catch (e) { } } else if (Array.isArray(p.colors)) parsedColors = p.colors;
 
@@ -293,8 +314,8 @@ async function fetchProductsFromDatabase() {
                     name: p.name,
                     price: parseFloat(p.price) || 0,
                     rating: 4.5,
-                    image: parsedImages.length > 0 ? parsedImages[0] : 'https://picsum.photos/150/150?random=100',
-                    galleryImages: parsedImages.length > 0 ? parsedImages : ['https://picsum.photos/150/150?random=100'],
+                    image: parsedImages.length > 0 ? parsedImages[0] : 'https://via.placeholder.com/300/300?text=Basket',
+                    galleryImages: parsedImages.length > 0 ? parsedImages : ['https://via.placeholder.com/300/300?text=Basket'],
                     description: p.short_description || p.long_description || 'Product Description',
                     blockType: 'normal',
                     size: p.size || 'medium',
@@ -306,8 +327,7 @@ async function fetchProductsFromDatabase() {
 
         if (customData.success && customData.data) {
             const parsedCustom = customData.data.map(p => {
-                let parsedImages = [];
-                if (typeof p.images === 'string') { try { parsedImages = JSON.parse(p.images); } catch (e) { } } else if (Array.isArray(p.images)) parsedImages = p.images;
+                const parsedImages = parseImages(p.images);
                 let parsedOpts = {};
                 if (typeof p.customization_options === 'string') { try { parsedOpts = JSON.parse(p.customization_options); } catch (e) { } } else if (typeof p.customization_options === 'object') parsedOpts = p.customization_options || {};
 
@@ -316,8 +336,8 @@ async function fetchProductsFromDatabase() {
                     name: p.name,
                     price: parseFloat(p.base_price) || 0,
                     rating: 4.8,
-                    image: parsedImages.length > 0 ? parsedImages[0] : 'https://picsum.photos/150/150?random=200',
-                    galleryImages: parsedImages.length > 0 ? parsedImages : ['https://picsum.photos/150/150?random=200'],
+                    image: parsedImages.length > 0 ? parsedImages[0] : 'https://via.placeholder.com/300/300?text=Custom+Basket',
+                    galleryImages: parsedImages.length > 0 ? parsedImages : ['https://via.placeholder.com/300/300?text=Custom+Basket'],
                     description: p.short_description || p.long_description || 'Customizable Product Description',
                     blockType: 'customized',
                     customization_options: parsedOpts
@@ -422,6 +442,30 @@ function handleSearch() {
     renderProducts();
 }
 
+// Helper to resolve image paths consistently across the app
+function resolveImg(img) {
+    if (!img || img === 'basket-placeholder') return 'https://via.placeholder.com/300/300?text=WireNest+Basket';
+    
+    // Normalize localhost URLs (common during migration or local dev)
+    if (img.includes('localhost:8001') || img.includes('localhost:3000')) {
+        img = img.replace(/https?:\/\/localhost:\d+/, BACKEND_URL);
+    }
+
+    // Handle relative /uploads/ paths
+    if (img.includes('/uploads/') && !img.startsWith('http')) {
+        return `${BACKEND_URL}${img.substring(img.indexOf('/uploads/'))}`;
+    }
+    
+    // Handle Supabase/Absolute URLs
+    if (img.startsWith('http')) return img;
+    
+    // Handle local images/ directory
+    if (img.startsWith('images')) return img;
+    
+    // Default fallback
+    return img;
+}
+
 // Render Products
 function renderProducts() {
     console.log('=== RENDERING PRODUCTS ===');
@@ -443,20 +487,7 @@ function renderProducts() {
         <div class="main-products-section" id="mainProductsSection">
             <div class="product-section">
                 <div class="products-row">
-                    ${displayProducts.map(product => {
-                        let imgUrl = product.image || '';
-                        // Normalize image URL: replace any localhost refs with live backend URL
-                        if (imgUrl.includes('localhost:8001') || imgUrl.includes('localhost:3000')) {
-                            imgUrl = imgUrl.replace(/https?:\/\/localhost:\d+/, BACKEND_URL);
-                        } else if (imgUrl.includes('/uploads/') && !imgUrl.startsWith('http')) {
-                            imgUrl = `${BACKEND_URL}${imgUrl.substring(imgUrl.indexOf('/uploads/'))}`;
-                        } else if (imgUrl.includes('/uploads/') && imgUrl.startsWith('http')) {
-                            // already absolute — use as-is (handles Render or Supabase CDN URLs)
-                        } else if (!imgUrl.startsWith('http') && imgUrl !== '') {
-                            imgUrl = imgUrl.startsWith('images') ? imgUrl : `images/${imgUrl}`;
-                        }
-                        if (!imgUrl) imgUrl = 'https://picsum.photos/300/300?random=' + product.id;
-                        return `
+                    ${displayProducts.map(product => `
                         <div class="product-card" onclick="showProductModal('${product.id}')">
                             <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist('${product.id}', '${product.blockType || 'normal'}', this)" aria-label="Add to Wishlist">
                                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -464,7 +495,7 @@ function renderProducts() {
                                 </svg>
                             </button>
                             <div class="product-image">
-                                <img src="${imgUrl}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                                <img src="${resolveImg(product.image)}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                             </div>
                             <div class="product-info">
                                 <h3>${product.name}</h3>
@@ -474,7 +505,7 @@ function renderProducts() {
                                 </div>
                             </div>
                         </div>
-                    `}).join('')}
+                    `).join('')}
                 </div>
             </div>
         </div>
@@ -690,28 +721,26 @@ function renderCartItems() {
         return;
     }
 
+
     cartItems.innerHTML = cart.map(item => `
-        <div class="cart-item">
+        <div class="cart-item" onclick="showProductModal('${item.productId}')" style="cursor: pointer;">
             <div class="cart-item-image">
-                ${item.image === 'basket-placeholder' ?
-            '<div class="product-placeholder">BASKET</div>' :
-            `<img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">`
-        }
+                <img src="${resolveImg(item.image)}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
             </div>
             <div class="cart-item-details">
                 <div class="cart-item-name">${item.name}</div>
                 ${item.size ? `<div style="color: var(--text-secondary); font-size: 14px;">Size: ${item.size.charAt(0).toUpperCase() + item.size.slice(1)}</div>` : ''}
                 ${item.colors ? `<div style="color: var(--text-secondary); font-size: 14px;">Colors: ${Array.isArray(item.colors) ? item.colors.join(', ') : item.colors}</div>` : ''}
                 ${item.isCustomized ? '<div style="color: var(--primary-color); font-size: 12px; font-weight: 600;">CUSTOMIZED</div>' : ''}
-                <div style="color: var(--text-secondary); font-size: 14px; display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <div style="color: var(--text-secondary); font-size: 14px; display: flex; align-items: center; gap: 8px; margin-top: 4px;" onclick="event.stopPropagation()">
                     Quantity: 
-                    <button class="btn-sm" style="padding: 2px 8px;" onclick="updateCartQuantity('${item.id}', -1)">-</button>
+                    <button class="btn-sm" style="padding: 2px 8px; cursor: pointer;" onclick="updateCartQuantity('${item.id}', -1); event.stopPropagation();">-</button>
                     <span style="font-weight: bold; color: var(--text-primary);">${item.quantity}</span>
-                    <button class="btn-sm" style="padding: 2px 8px;" onclick="updateCartQuantity('${item.id}', 1)">+</button>
+                    <button class="btn-sm" style="padding: 2px 8px; cursor: pointer;" onclick="updateCartQuantity('${item.id}', 1); event.stopPropagation();">+</button>
                 </div>
                 <div style="color: var(--text-primary); font-weight: 600; margin-top: 4px;">Total: ₹${(item.price * item.quantity).toFixed(2)}</div>
             </div>
-            <button class="cart-item-remove" onclick="removeFromCart('${item.id}')">×</button>
+            <button class="cart-item-remove" onclick="removeFromCart('${item.id}'); event.stopPropagation();" aria-label="Remove item">×</button>
         </div>
     `).join('');
 
@@ -784,13 +813,11 @@ function renderOrderSummary() {
         return;
     }
 
+
     orderSummaryItems.innerHTML = cart.map(item => `
-        <div class="order-summary-item">
+        <div class="order-summary-item" onclick="showProductModal('${item.productId}')" style="cursor: pointer;">
             <div class="order-item-image">
-                ${item.image === 'basket-placeholder' ?
-            '<div class="product-placeholder">BASKET</div>' :
-            `<img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover;">`
-        }
+                <img src="${resolveImg(item.image)}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
             </div>
             <div class="order-item-details">
                 <div class="order-item-name">${item.name}</div>
@@ -2180,9 +2207,7 @@ function openOrderDetails(order) {
                 }
             }
 
-            const absoluteImageUrl = item.product_image && !item.product_image.startsWith('http')
-                ? `${BACKEND_URL}${item.product_image}`
-                : item.product_image;
+            const absoluteImageUrl = resolveImg(item.product_image);
 
             return `
                 <div class="ordered-item-card">
@@ -2342,9 +2367,7 @@ async function openWishlistModal() {
                     
                 if (!liveProduct) return '';
 
-                const absoluteImage = liveProduct.image && !liveProduct.image.startsWith('http') 
-                    ? (liveProduct.image.startsWith('images') ? liveProduct.image : `../${liveProduct.image}`) 
-                    : liveProduct.image;
+                const absoluteImage = resolveImg(liveProduct.image);
 
                 return `
                     <div class="cart-item">

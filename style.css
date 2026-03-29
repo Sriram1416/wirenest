@@ -3331,30 +3331,43 @@ h4 {
     transform: scale(1);
 }
 
+/* Close button wrapper - transparency for sticky tracking */
+.modal-close-wrapper {
+    display: contents;
+}
+
 .modal-close {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: white;
-    border: none;
-    font-size: 28px;
+    background: #2563eb; /* Blue as requested */
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    font-size: 24px;
+    font-weight: bold;
     cursor: pointer;
-    color: var(--text-secondary);
-    width: 40px;
-    height: 40px;
+    color: white; /* White X on blue background */
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    transition: all var(--transition-fast);
-    box-shadow: var(--shadow-sm);
+    z-index: 99999;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .modal-close:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    transform: scale(1.1);
+    background: #f1f5f9;
+    color: var(--primary-color, #0a1931);
+    transform: rotate(90deg) scale(1.1);
+    border-color: var(--primary-color, #0a1931);
+}
+
+.modal-close:active {
+    transform: scale(0.93);
+    background: #e2e8f0;
 }
 
 .product-details {
@@ -3683,12 +3696,30 @@ h4 {
         min-height: 250px;
     }
 
+    .modal-content {
+        width: 96%;
+        max-height: 92vh;
+        border-radius: 12px;
+    }
+
     .modal-close {
-        top: 16px;
-        right: 16px;
-        width: 36px;
-        height: 36px;
-        font-size: 24px;
+        position: sticky; /* Back to sticky for better modal tracking */
+        top: 20px;
+        right: 20px;
+        float: right;
+        margin-bottom: -60px; /* Offset the float to not push content down */
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+        background: #2563eb !important; /* Vivid Blue as requested */
+        color: #ffffff !important; /* White X for contrast */
+        border: 2px solid #ffffff;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        z-index: 100000;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        border-radius: 50%;
     }
 
     .color-options {

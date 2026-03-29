@@ -9,18 +9,29 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const ADMIN_EMAIL = process.env.GMAIL_USER || 'wirenestteam@gmail.com';
 
-// Create transporter lazily
+// Create transporter with explicit settings for better reliability
 function createTransporter() {
     const pass = process.env.GMAIL_PASS;
     const user = process.env.GMAIL_USER || 'wirenestteam@gmail.com';
+    
     if (!pass) {
         console.error('❌ EMAIL CONFIG ERROR: GMAIL_PASS env var is not set!');
         return null;
     }
+
+    // Using explicit host/port instead of "service: gmail" for more control
     return nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user, pass },
-        tls: { rejectUnauthorized: false }
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // Use STARTTLS
+        auth: {
+            user: user,
+            pass: pass
+        },
+        tls: {
+            // Do not fail on invalid certs
+            rejectUnauthorized: false
+        }
     });
 }
 
@@ -56,6 +67,7 @@ export async function sendAdminNewOrderEmail(orderId, totalAmount, customerEmail
 
     const frontendUrl = process.env.FRONTEND_URL || 'https://wirenest.vercel.app';
     
+    console.log(`📧 Starting to send Admin Email for Order: ${orderId}...`);
     let itemsHtml = orderItems.map(item => {
         const imgSrc = item.image ? (item.image.startsWith('http') ? item.image : `${frontendUrl}/${item.image}`) : '';
         return `
