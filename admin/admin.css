@@ -595,20 +595,28 @@
    MOBILE RESPONSIVENESS
    ========================================================================= */
 @media (max-width: 768px) {
+    .admin-body {
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+
     .admin-layout {
         flex-direction: column;
-        height: auto;
-        min-height: calc(100vh - 80px);
+        height: calc(100vh - 80px) !important;
+        width: 100%;
     }
 
     /* Convert Sidebar to horizontal scrolling menu */
     .admin-sidebar {
         width: 100%;
+        height: 65px;
+        flex: 0 0 65px; /* DO not grow, DO not shrink */
         border-right: none;
         border-bottom: 1px solid var(--border-color);
         overflow-x: auto;
         overflow-y: hidden;
-        flex-shrink: 0;
         /* Hides scrollbar in some browsers for cleaner look */
         scrollbar-width: none; 
     }
@@ -619,18 +627,23 @@
 
     .sidebar-nav {
         flex-direction: row;
-        padding: 15px 15px;
+        padding: 10px 15px;
         gap: 10px;
         min-width: max-content;
+        height: 100%;
+        align-items: center;
     }
 
     .sidebar-link {
-        padding: 10px 16px;
+        padding: 8px 14px;
         border-left: none;
         border-bottom: 3px solid transparent;
         white-space: nowrap;
         background-color: var(--bg-secondary);
         border-radius: var(--radius-md) var(--radius-md) 0 0;
+        display: flex;
+        align-items: center;
+        height: 44px; /* fill the tab bar nicely */
     }
 
     .sidebar-link.active {
@@ -645,8 +658,11 @@
     }
 
     .admin-main {
+        flex: 1;
         padding: 15px;
+        overflow-y: auto;
         overflow-x: hidden;
+        height: calc(100vh - 145px); /* Ensures it can scroll internally */
     }
 
     .admin-header-row {
